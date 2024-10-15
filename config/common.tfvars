@@ -24,15 +24,15 @@ accounts = {
     email = "",
     id    = 444444444444
   },
-  apps-devstg = {
+  dev = {
     email = "",
     id    = 555555555555
   },
-  apps-prd = {
+  prod = {
     email = "",
     id    = 666666666666
   }
-  data-science = {
+  staging = {
     email = "",
     id    = 666666666666
   }
@@ -50,8 +50,7 @@ external_accounts = {
 }
 
 sso_enabled   = true
-sso_start_url = "https://leverage.awsapps.com/start"
-sso_region    = "us-east-1"
+sso_region    = "eu-north-1"
 
 enable_tgw = false
 
