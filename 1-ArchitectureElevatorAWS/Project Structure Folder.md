@@ -1,6 +1,10 @@
+```
 ArchitectElevatorAWS/
 │
+├── manage_modules.sh (execution 02)
+│
 ├── modules/
+│   backend_setup.tf (execution 01)
 │   ├── networking/
 │   ├── compute/
 │   ├── database/
@@ -8,7 +12,7 @@ ArchitectElevatorAWS/
 │   ├── monitoring/
 │   └── shared-services/
 │ 
-├── environments/
+├── accounts/
 │   ├── management/
 │   ├── security/
 │   ├── shared/
@@ -21,14 +25,18 @@ ArchitectElevatorAWS/
 │   ├── common-variables.tf
 │   └── common.tfvars
 │
-├── teams/
+├── projects/
 │   ├── business-domain-a/
 │   ├── business-domain-b/
 │   └── platform/
 │
 ├── policies/
-│   ├── governance/
-│   └── compliance/
+├── policy-sets/
+│   ├── default/
+│   ├── high-security/
+│   └── compliance-heavy/
+├── governance/
+└── compliance/
 │
 ├── scripts/
 │   ├── ci-cd/
@@ -47,6 +55,7 @@ ArchitectElevatorAWS/
 ├── .gitignore
 ├── README.md
 └── main.tf
+```
 
 1. <mark style="background: #ABF7F7A6;">Accounts</mark>: 
 	* Vertical Cohesion:  By having separate accounts for management, security, shared services, networking, it is enabling teams to own their entire stack and make end-to-end decisions within their domain
@@ -63,7 +72,8 @@ ArchitectElevatorAWS/
 
 4. Config:
 
-1. <mark class="hltr-cyan">Environments</mark>:  
+
+6. <mark class="hltr-cyan">Environments</mark>:  
     - Rapid prototyping and experimentation in dev
     - Realistic testing in staging
     - Controlled releases to production  
@@ -71,7 +81,7 @@ ArchitectElevatorAWS/
 <mark style="background: #FFF3A3A6;">This supports the Build-Measure-Learn cycle, allowing quick feedback and iteration across all stages of development and deployment</mark>
 
 
-6. <mark class="hltr-cyan">Teams</mark>:  "Vertical Cohesion", enabling teams to own their entire stack while using shared modules.
+6. <mark class="hltr-cyan">Projects</mark>:  "Vertical Cohesion", enabling teams to own their entire stack while using shared modules.
    
 	- Empowers teams to make end-to-end decisions
 	- Reduces dependencies between teams

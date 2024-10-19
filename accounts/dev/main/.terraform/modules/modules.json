@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"common-variables","Source":"./config/common.tfvars","Dir":""},{"Key":"iam_account_config","Source":"registry.terraform.io/terraform-aws-modules/iam/aws","Version":"5.46.0","Dir":".terraform/modules/iam_account_config"}]}

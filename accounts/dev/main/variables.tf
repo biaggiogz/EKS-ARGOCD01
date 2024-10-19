@@ -32,3 +32,7 @@ variable "dynamodb_table" {
   type        = string
   description = "DynamoDB table name for Terraform backend"
 }
+
+
+variable "project" {
+}

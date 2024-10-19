@@ -2,7 +2,7 @@ project         = "EKS"
 
 project_long    = "EKS-ELEVATOR"
 
-region_primary = "eu-north-1"
+primary_region = "eu-north-1"
 
 region_secondary      = "us-east-2"
 

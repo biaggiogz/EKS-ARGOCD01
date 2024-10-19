@@ -1,6 +1,10 @@
-### AWS Org member accounts IAM groups
+### Five types of security policy
 
-| Account Name       | Admin | Auditor | DevOps | MasterDeploy |
-| ------------------ | ----- | ------- | ------ | ------------ |
-| project-management |       |         |        |              |
-|                    |       |         |        |              |
+
+| Policy Type             | Scope / Attachment Point              | Supported Effect(s)  | Purpose                                                                                                                                                                     |
+|-------------------------|---------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Service Control Policy   | AWS Organizational Unit or Account    | Limit Allows, Deny    | **Limit** an entire AWS organizational unit or account's use of AWS service API actions                                                                                      |
+| Identity Policy          | IAM user, group, or role              | Allow, Deny           | **Grant** or **limit** a principal's use of AWS service API actions and resources within the account.                                                                        |
+| Permissions Boundary     | IAM user or role                      | Limit Allows, Deny    | **Limit** an IAM principal's use of AWS service API actions **granted via Identity policies**, particularly AWS Managed Policies. **Partially limits** permissions granted by Resource policies. |
+| Session Policy           | STS session                           | Limit Allows, Deny    | **Limit** an IAM principal's use of AWS service API actions **granted via Identity policies** within a given Security Token Service (STS) session to those allowed by the Session policy. Does not limit permissions granted directly to the session by Resource policies. |
+| Resource Policy          | Resource                              | Allow, Deny           | **Grant** or **limit** a principal's or session's use of AWS service API actions to a particular resource. Resource policies let you grant permissions to other AWS accounts or services on a per-resource basis, enabling cross-account and public access scenarios. |
