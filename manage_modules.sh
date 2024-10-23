@@ -1,12 +1,11 @@
 #!/bin/bash
 
 # First, set up the backend infrastructure
-terraform init
-terraform apply -auto-approve
+#terraform init
+#terraform apply -auto-approve
 
 # Get the bucket names from Terraform output
-bucket_names=$(terraform output -json s3_bucket_names | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
-
+bucket_names=$(terraform show -json modules/terraform.tfstate | jq -r '.values.root_module.resources[] | select(.type == "aws_s3_bucket") | "\(.name)=\(.values.id)"')
 # Loop through each module
 for bucket_info in $bucket_names; do
   IFS='=' read -r module bucket <<< "$bucket_info"
