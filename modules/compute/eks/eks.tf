@@ -31,18 +31,7 @@ provider "kubectl" {
   load_config_file       = false
   token                  = data.aws_eks_cluster_auth.eks.token
 }
-data "terraform_remote_state" "vpc" {
-  backend = "s3"
 
-  config = {
-    bucket = "terraform-state-networking-infinitydataservices-com"
-    key     = "terrafrom-state/vpc-production-01/terraform.tfstate"
-    region = "eu-north-1"
-    encrypt    = true
-    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
-
-  }
-}
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -126,10 +115,7 @@ module "eks" {
         }
       })
     }
-   /* aws-ebs-csi-driver = {
-      most_recent = true
-      service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
-    }*/
+
   }
   tags = {
     Blueprint  = var.cluster_name
@@ -141,7 +127,6 @@ module "eks" {
     aws_iam_role_policy_attachment.eks_ecr_policy,
     aws_iam_role_policy_attachment.eks_cluster_policy,
     aws_iam_role_policy_attachment.eks_loadbalancer_policy
-  #  aws_iam_role_policy_attachment.ebs_csi_driver
 
   ]
 }

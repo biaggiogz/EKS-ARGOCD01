@@ -95,3 +95,8 @@ variable "create_iam_roles" {
   type        = bool
   default     = true
 }
+
+variable "ebs_csi_policy_name" {
+  default = "Amazon_EBS_CSI_Driver"
+}
+
