@@ -25,6 +25,10 @@ terraform {
       source  = "argoproj-labs/argocd"
       version = "7.0.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
   }
   backend "s3" {
     bucket         = "terraform-state-database-infinitydataservices-com"
