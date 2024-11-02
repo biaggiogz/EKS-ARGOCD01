@@ -1,14 +1,21 @@
 ```
 ArchitectElevatorAWS/
-│
-├── manage_modules.sh (execution 02)
-│
+├──manage_modules.sh (execution 02)
 ├── modules/
 │   backend_setup.tf (execution 01)
+├── 
 │   ├── networking/
 │   ├── compute/
 │   ├── database/
 │   ├── security/
+│	│   ├── iam-roles
+│	│	│   ├── documentation.tf  
+│	│	│	├── roles.tf
+│	│   ├── kubernetes
+│	│	│   ├── kubernetes-rbac.tf
+│	│	├── backend.tf	
+│	│	├── variables.tf	
+│	│	├── main.tf (execution 03) --> execute resources inside subfolders
 │   ├── monitoring/
 │   └── shared-services/
 │ 

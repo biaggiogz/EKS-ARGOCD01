@@ -1,1 +1,8 @@
 accounts/dev/main/.terraform/*
+modules/.terraform/*
+modules/compute/.terraform/*
+modules/database/.terraform/*
+modules/monitoring/.terraform/*
+modules/networking/.terraform/*
+modules/security/.terraform/*
+modules/security/iam-roles/.terraform/*

@@ -1,10 +1,7 @@
-# Data Sources
 data "aws_availability_zones" "available" {}
 data "aws_region" "current" {}
 
-provider "aws" {
-  # region = "eu-north-1"  # Uncomment and set the region if needed
-}
+
 
 locals {
   name            = var.environment_name
@@ -16,10 +13,11 @@ locals {
 
   tags = {
     Blueprint  = local.name
-    GithubRepo = "https://github.com/biaggiogz/EKS/tree/EKS-ArgoCD"
+    #GithubRepo = "https://github.com/biaggiogz/EKS/tree/EKS-ArgoCD"
   }
 }
 
+# VPC Module
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0.0"
@@ -30,6 +28,8 @@ module "vpc" {
   azs             = local.azs
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k)]
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 10)]
+  #secondary_cidr_blocks = var.secondary_cidr_blocks
+
 
   enable_nat_gateway   = true
   create_igw           = true
@@ -44,31 +44,23 @@ module "vpc" {
   manage_default_security_group = true
   default_security_group_tags   = { Name = "${local.name}-default" }
 
+
+  # ------------------------------
+  # Private Subnets for Airflow metadata store
+  database_subnets                   = var.db_private_subnets
+  create_database_subnet_group       = true
+  create_database_subnet_route_table = true
+
   public_subnet_tags = {
     "kubernetes.io/role/elb"                            = 1
-    "kubernetes.io/cluster/${local.eks_name}" = "shared" #owned
+    "kubernetes.io/cluster/${local.eks_name}" = "shared"
   }
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb"                   = 1
-    "kubernetes.io/cluster/${local.eks_name}" = "shared"  #owned
+    "kubernetes.io/cluster/${local.eks_name}" = "shared"
+
   }
 
   tags = local.tags
-}
-
-
-output "vpc_id" {
-  description = "The ID of the VPC"
-  value       = module.vpc.vpc_id
-}
-
-output "private_subnets" {
-  description = "List of IDs of private subnets"
-  value       = module.vpc.private_subnets
-}
-
-output "public_subnets" {
-  description = "List of IDs of public subnets"
-  value       = module.vpc.public_subnets
 }
