@@ -1,37 +1,64 @@
 #!/bin/bash
 
-# First, set up the backend infrastructure
-#terraform init
-#terraform apply -auto-approve
+# Set up variables
+region="eu-north-1"
+current_dir=$(pwd)
 
-# Get the bucket names from Terraform output
-bucket_names=$(terraform show -json modules/terraform.tfstate | jq -r '.values.root_module.resources[] | select(.type == "aws_s3_bucket") | "\(.name)=\(.values.id)"')
-# Loop through each module
-for bucket_info in $bucket_names; do
-  IFS='=' read -r module bucket <<< "$bucket_info"
-  
-  echo "Configuring module: $module"
-  
-  # Change to module directory
-  cd modules/$module
-  
-  # Create backend config
-  cat > backend.tf <<EOF
+# Function to create backend.tf file
+create_backend_tf() {
+    local module_name=$1
+    local bucket_name=$2
+
+    cat <<EOF > "$module_name/backend.tf"
 terraform {
   backend "s3" {
-    bucket         = "$bucket"
-    key            = "terraform.tfstate"
-    region         = "eu-north-1"
+    bucket         = "$bucket_name"
+    key            = "$module_name/terraform.tfstate"
+    region         = "$region"
     encrypt        = true
-    dynamodb_table = "terraform-state-lock"
   }
 }
 EOF
+}
 
-  # Initialize and apply
-  terraform init -reconfigure
-  terraform apply -auto-approve
-  
-  # Return to root
-  cd ../..
+# Loop through modules
+for module in "$current_dir"/modules/*; do
+    if [ -d "$module" ]; then
+        module_name=$(basename "$module")
+
+        # Determine the correct bucket name based on the module
+        case $module_name in
+            networking)
+                bucket_name="terraform-state-networking-infinitydataservices-com"
+                ;;
+            compute)
+                bucket_name="terraform-state-compute-infinitydataservices-com"
+                ;;
+            database)
+                bucket_name="terraform-state-database-infinitydataservices-com"
+                ;;
+            security)
+                bucket_name="terraform-state-security-infinitydataservices-com"
+                ;;
+            monitoring)
+                bucket_name="terraform-state-monitoring-infinitydataservices-com"
+                ;;
+            shared-services)
+                bucket_name="terraform-state-shared-services-infinitydataservices-com"
+                ;;
+            *)
+                bucket_name="terraform-state-infinitydataservices-com"
+                ;;
+        esac
+
+        echo "Configuring backend for module: $module_name"
+        create_backend_tf "$module" "$bucket_name"
+
+        # Change to module directory and initialize backend
+        cd "$module"
+        terraform init -reconfigure
+        cd "$current_dir"
+    fi
 done
+
+echo "Backend configuration completed for all modules."
