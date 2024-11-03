@@ -2,7 +2,7 @@
 
 resource "aws_iam_role" "eks_admin" {
   #count = var.create_iam_roles ? 0 : 1
-  name  = "${var.environment_name}-${var.cluster_name}-eks-admin"
+  name  = "${local.name}-${local.cluster_name}-eks-admin"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -19,7 +19,7 @@ resource "aws_iam_role" "eks_admin" {
 }
 
 resource "aws_iam_role" "eks_nodes" {
-  name  = "${var.environment_name}-${var.cluster_name}-eks-nodes"
+  name  = "${local.name}-${local.cluster_name}-eks-nodes"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

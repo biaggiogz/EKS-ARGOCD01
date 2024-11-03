@@ -1,7 +1,7 @@
 output "configure_kubectl" {
   description = "Configure kubectl: make sure you're logged in with the correct AWS profile and run the following command to update your kubeconfig"
   value       = <<-EOT
-    aws eks --region ${var.region} update-kubeconfig --name ${module.eks.cluster_name} --alias ekshub
+    aws eks --region ${local.region} update-kubeconfig --name ${module.eks.cluster_name} --alias ekshub
   EOT
 }
 
@@ -19,22 +19,13 @@ output "cluster_certificate_authority_data" {
 }
 output "cluster_region" {
   description = "Cluster Hub region"
-  value       = var.region
+  value       = local.region
 }
 output "hub_node_security_group_id" {
   description = "Cluster Hub region"
   value       = module.eks.node_security_group_id
 }
 
-output "public_dns_name" {
-  value       = var.public_dns_name
-  description = "The public DNS name"
-}
-output "r53_hosted_zone_id" {
-  value =  var.r53_hosted_zone_id
-  description = "zone id"
-
-}
 
 output "helm_kubernetes" {
   value = {
@@ -44,7 +35,7 @@ output "helm_kubernetes" {
     exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
     }
   }
   sensitive = true
@@ -58,7 +49,7 @@ output "kubernetes" {
     exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", var.region]
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--region", local.region]
     }
   }
   sensitive = true
@@ -88,3 +79,9 @@ output "cluster_oidc_issuer_url" {
   sensitive = true
 
 }
+/*
+output "eks_managed_node_group_subnets" {
+  description = "List of subnet IDs used for EKS managed node groups"
+  value       = values(module.eks.eks_managed_node_groups)[*].subnet_ids
+}
+*/
