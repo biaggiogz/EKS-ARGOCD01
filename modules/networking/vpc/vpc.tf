@@ -4,31 +4,39 @@ data "aws_region" "current" {}
 
 
 locals {
-  name            = var.environment_name
+  name            = data.terraform_remote_state.global-variables.outputs.environment_name
   region          = data.aws_region.current.id
-  eks_name        = var.eks_name
-  vpc_cidr        = var.vpc_cidr
+  eks_name        = data.terraform_remote_state.global-variables.outputs.cluster_name
+  vpc_cidr        = data.terraform_remote_state.global-variables.outputs.vpc_cidr
   num_of_subnets  = min(length(data.aws_availability_zones.available.names), 2)
   azs             = slice(data.aws_availability_zones.available.names, 0, local.num_of_subnets)
-
+  private_subnets = data.terraform_remote_state.global-variables.outputs.private_subnets
+  eks_data_plane_subnet_secondary_cidr = data.terraform_remote_state.global-variables.outputs.eks_data_plane_subnet_secondary_cidr
   tags = {
     Blueprint  = local.name
     #GithubRepo = "https://github.com/biaggiogz/EKS/tree/EKS-ArgoCD"
   }
+
 }
 
-# VPC Module
 module "vpc" {
+  name = local.name
+
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0.0"
 
-  name = local.name
   cidr = local.vpc_cidr
+  azs  = local.azs
 
-  azs             = local.azs
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k)]
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 10)]
-  #secondary_cidr_blocks = var.secondary_cidr_blocks
+  secondary_cidr_blocks = data.terraform_remote_state.global-variables.outputs.secondary_cidr_blocks
+
+  private_subnets = concat(local.private_subnets, local.eks_data_plane_subnet_secondary_cidr)
+
+  public_subnets = data.terraform_remote_state.global-variables.outputs.public_subnets
+
+  database_subnets                   = data.terraform_remote_state.global-variables.outputs.db_private_subnets
+  create_database_subnet_group       = true
+  create_database_subnet_route_table = true
 
 
   enable_nat_gateway   = true
@@ -37,19 +45,13 @@ module "vpc" {
   single_nat_gateway   = true
   enable_dns_support   = true
 
-  manage_default_network_acl    = true
-  default_network_acl_tags      = { Name = "${local.name}-default" }
-  manage_default_route_table    = true
-  default_route_table_tags      = { Name = "${local.name}-default" }
-  manage_default_security_group = true
-  default_security_group_tags   = { Name = "${local.name}-default" }
-
-
-  # ------------------------------
-  # Private Subnets for Airflow metadata store
-  database_subnets                   = var.db_private_subnets
-  create_database_subnet_group       = true
-  create_database_subnet_route_table = true
+  /*manage_default_network_acl    = false
+  public_dedicated_network_acl  = true
+  private_dedicated_network_acl = true
+  private_inbound_acl_rules = concat(
+    local.network_acls["default_inbound"],
+    local.network_acls["private_inbound"],
+  )*/
 
   public_subnet_tags = {
     "kubernetes.io/role/elb"                            = 1
