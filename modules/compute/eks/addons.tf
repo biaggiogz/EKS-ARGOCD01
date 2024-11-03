@@ -17,7 +17,7 @@ module "ebs_csi_driver_irsa" {
 module "eks_blueprints_addons" {
   # Short commit hash from 8th May using git rev-parse --short HEAD
   source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "~> 1.2"
+  version = "~> 1.18"
 
   cluster_name      = module.eks.cluster_name
   cluster_endpoint  = module.eks.cluster_endpoint
@@ -50,7 +50,7 @@ module "eks_blueprints_addons" {
   metrics_server = {
     values = [templatefile("${path.module}/helm-values/metrics-server-values.yaml", {})]
   }
-
+ /*
   enable_cluster_autoscaler = true
   cluster_autoscaler = {
     values = [templatefile("${path.module}/helm-values/cluster-autoscaler-values.yaml", {
@@ -58,7 +58,7 @@ module "eks_blueprints_addons" {
       eks_cluster_id = module.eks.cluster_name
     })]
   }
-
+*/
 
   #---------------------------------------
   # CloudWatch metrics for EKS
