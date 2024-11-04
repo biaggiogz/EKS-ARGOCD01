@@ -38,10 +38,29 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
-data "aws_eks_node_group" "on_spot" {
-  cluster_name    = var.cluster_name
-  node_group_name = "node-argocd-2024110218154487620000000c"  ###manual input
+data "terraform_remote_state" "global-variables" {
+  backend = "s3"
+
+  config = {
+    bucket         = "terraform-state-infinitydataservices-com"
+    key            = "ArchitectElevatorAWS/modules/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+
+  }
 }
 
+data "terraform_remote_state" "iam-rds-postgres" {
+  backend = "s3"
 
+  config = {
+    bucket         = "terraform-state-security-infinitydataservices-com"
+    key            = "terrafrom-state/iam-roles/rds/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+
+  }
+}
 
