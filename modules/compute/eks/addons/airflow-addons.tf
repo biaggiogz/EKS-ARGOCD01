@@ -9,7 +9,7 @@ module "eks_data_addons" {
   enable_airflow = true
   airflow_helm_config = {
     namespace = local.airflow_namespace
-    version   = "1.11.0"
+    version   = "1.14.0"
 
     values = [templatefile("${path.module}/helm-values/airflow-values.yaml", {
 
