@@ -10,13 +10,13 @@ module "eks_data_addons" {
   airflow_helm_config = {
     namespace = local.airflow_namespace
     version   = "1.11.0"
+
     values = [templatefile("${path.module}/helm-values/airflow-values.yaml", {
 
-      airflow_db_user = local.airflow_name
-      airflow_db_pass = try(sensitive(aws_secretsmanager_secret_version.postgres[0].secret_string), "")
-      airflow_db_name = try(module.db[0].db_instance_name, "")
-      airflow_db_host = try(element(split(":", module.db[0].db_instance_endpoint), 0), "")
-      airflow_db_host = data.terraform_remote_state.storage-airflow.outputs.rds_enpoint_airflow_postgres
+      airflow_db_user = "airflow"
+      airflow_db_pass = try(sensitive(data.terraform_remote_state.postgres-secrets.outputs.postgres_pass), "")
+      airflow_db_name = "airflow"
+      airflow_db_host = try(element(split(":", data.terraform_remote_state.storage-airflow.outputs.airflow_db_host), 0), "")
       #Service Accounts
       worker_service_account    = try(kubernetes_service_account_v1.airflow_worker.metadata[0].name, local.airflow_workers_service_account)
       scheduler_service_account = try(kubernetes_service_account_v1.airflow_scheduler.metadata[0].name, local.airflow_scheduler_service_account)
