@@ -1,19 +1,5 @@
 
-locals {
-  airflow_namespace = "airflow"
-  airflow_scheduler_service_account = "airflow-scheduler"
-  airflow_webserver_service_account = "airflow-webserver"
-  airflow_workers_service_account   = "airflow-worker"
-  airflow_webserver_secret_name     = "airflow-webserver-secret-key"
-  efs_storage_class                 = "efs-sc"
-  efs_pvc                           = "airflowdags-pvc"
-  name = data.terraform_remote_state.global-variables.outputs.environment_name
-  cluster_name = data.terraform_remote_state.global-variables.outputs.cluster_name
-  tags = {
-    Blueprint  = local.name
-  }
 
-}
 resource "kubernetes_namespace_v1" "airflow" {
   metadata {
     name = local.airflow_namespace
@@ -322,4 +308,86 @@ resource "null_resource" "check_secret_deployment" {
   }
   depends_on = [kubernetes_secret.airflow_webserver]
 
+}
+
+#---------------------------------------------------------------
+# Persistent Volume Claim for EFS
+#---------------------------------------------------------------
+
+resource "kubernetes_storage_class" "efs" {
+  metadata {
+    name = local.efs_storage_class
+  }
+
+  storage_provisioner = "efs.csi.aws.com"
+  reclaim_policy      = "Retain"
+  parameters = {
+    provisioningMode = "efs-ap"
+    fileSystemId     = aws_efs_file_system.efs.id
+    directoryPerms   = "700"
+    gidRangeStart    = "1000"
+    gidRangeEnd      = "2000"
+  }
+
+  depends_on = [aws_efs_file_system.efs]
+}
+
+
+resource "kubernetes_persistent_volume_claim" "efs" {
+  metadata {
+    name      = local.efs_pvc
+    namespace = kubernetes_namespace_v1.airflow.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteMany"]
+    storage_class_name = local.efs_storage_class
+
+    resources {
+      requests = {
+        storage = "10Gi"
+      }
+    }
+  }
+
+  depends_on = [kubernetes_storage_class.efs, kubernetes_namespace_v1.airflow]
+}
+#---------------------------------------------------------------
+# EFS Filesystem for Airflow DAGs
+#---------------------------------------------------------------
+resource "aws_efs_file_system" "efs" {
+  creation_token = "efs"
+  encrypted      = true
+
+  tags = local.tags
+}
+variable "eks_data_plane_subnet_secondary_cidr" {
+  description = "Secondary CIDR blocks. 32766 IPs per Subnet per Subnet/AZ for EKS Node and Pods"
+  default     = ["100.64.0.0/17", "100.64.128.0/17"]
+  type        = list(string)
+}
+resource "aws_efs_mount_target" "efs_mt" {
+  count = length(var.eks_data_plane_subnet_secondary_cidr)
+
+
+  file_system_id  = aws_efs_file_system.efs.id
+  subnet_id       = compact([for subnet_id, cidr_block in zipmap(local.private_subnets, local.private_subnets_cidr_blocks) : substr(cidr_block, 0, 4) == "100." ? subnet_id : null])[count.index]
+  security_groups = [aws_security_group.efs.id]
+  depends_on = [aws_efs_file_system.efs,aws_security_group.efs]
+}
+
+resource "aws_security_group" "efs" {
+  name        = "${local.name}-efs"
+  description = "Allow inbound NFS traffic from private subnets of the VPC"
+  vpc_id      = local.vpc_id
+
+  ingress {
+    description = "Allow NFS 2049/tcp"
+    cidr_blocks = local.private_subnets_cidr_blocks
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+  }
+
+  tags = local.tags
 }
