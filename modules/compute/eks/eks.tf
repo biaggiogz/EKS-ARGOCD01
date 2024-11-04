@@ -150,13 +150,14 @@ module "eks" {
       capacity_type = "SPOT"
 
       instance_types = ["t3.medium"]
+      #instance_types = ["m5.xlarge", "m5.2xlarge"]
 
       ebs_optimized = true
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size = 100
+            volume_size = 150
             volume_type = "gp3"
           }
         }
