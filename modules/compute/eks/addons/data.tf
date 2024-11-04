@@ -1,3 +1,6 @@
+data "aws_partition" "current" {}
+
+
 
 data "terraform_remote_state" "eks" {
   backend = "s3"
@@ -11,6 +14,33 @@ data "terraform_remote_state" "eks" {
 
   }
 }
+
+data "terraform_remote_state" "storage-airflow" {
+  backend = "s3"
+
+  config = {
+    bucket         = "terraform-state-database-infinitydataservices-com"
+    key            = "terrafrom-state/airflow-EKS-01/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+
+  }
+}
+
+data "terraform_remote_state" "global-variables" {
+  backend = "s3"
+
+  config = {
+    bucket         = "terraform-state-infinitydataservices-com"
+    key            = "ArchitectElevatorAWS/modules/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+
+  }
+}
+
 
 provider "kubernetes" {
   host                   = data.terraform_remote_state.eks.outputs.cluster_endpoint
