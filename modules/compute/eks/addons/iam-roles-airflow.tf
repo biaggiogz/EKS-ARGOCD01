@@ -276,29 +276,7 @@ resource "kubernetes_secret" "airflow_webserver" {
 
   depends_on = [kubernetes_namespace_v1.airflow, aws_secretsmanager_secret_version.airflow_webserver]
 }
-/*resource "kubectl_manifest" "airflow_webserver" {
-  sensitive_fields = [
-    "data.webserver-secret-key"
-  ]
 
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Secret
-metadata:
-   name: "airflow-webserver-secret-key"
-   namespace: "airflow"
-   labels:
-    app.kubernetes.io/managed-by: "Helm"
-   annotations:
-    meta.helm.sh/release-name: "airflow"
-    meta.helm.sh/release-namespace: "airflow"
-type: Opaque
-data:
-  webserver-secret-key: ${base64encode(aws_secretsmanager_secret_version.airflow_webserver.secret_string)}
-YAML
-
-  depends_on = [kubernetes_namespace_v1.airflow,aws_secretsmanager_secret_version.airflow_webserver]
-}*/
 resource "null_resource" "check_secret_deployment" {
 
   provisioner "local-exec" {

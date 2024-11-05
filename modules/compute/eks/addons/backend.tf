@@ -25,6 +25,10 @@ terraform {
       source  = "hashicorp/null"
       version = "~> 3.0"
     }
+    time = {
+      source = "hashicorp/time"
+      version = "0.12.1"
+    }
   }
   backend "s3" {
     bucket         = "terraform-state-compute-infinitydataservices-com"

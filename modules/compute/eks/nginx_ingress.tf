@@ -86,4 +86,16 @@ resource "helm_release" "nginx_ingress" {
     name  = "controller.config.ssl-redirect"
     value = "true"
   }
+  set {
+    name  = "keep-alive-requests"
+    value = "10000"
+  }
+  set {
+    name  = "keep-alive"
+    value = "75s"
+  }
+  set {
+    name  = "upstream-keepalive-timeout"
+    value = "300"
+  }
 }

@@ -39,7 +39,6 @@ resource "aws_acm_certificate_validation" "cert_validation" {
 }
 
 
-
 resource "kubernetes_ingress_v1" "airflow_ingress" {
   metadata {
     name = "airflow-ingress"
@@ -88,7 +87,7 @@ data "kubernetes_service" "nginx_ingress" {
 }
 
 data "aws_lb" "nginx_ingress" {
-  name = "k8s-kubesyst-nginxing-08335d4703"
+  name = "k8s-kubesyst-nginxing-d02efc403d"
 }
 
 resource "aws_route53_record" "airflow" {
