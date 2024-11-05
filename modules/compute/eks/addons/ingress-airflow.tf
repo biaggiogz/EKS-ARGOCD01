@@ -39,7 +39,6 @@ resource "aws_acm_certificate_validation" "cert_validation" {
 }
 
 
-/*
 
 resource "kubernetes_ingress_v1" "airflow_ingress" {
   metadata {
@@ -74,25 +73,12 @@ resource "kubernetes_ingress_v1" "airflow_ingress" {
   depends_on = [aws_acm_certificate_validation.cert_validation]
 }
 
-resource "null_resource" "wait_for_lb" {
-  provisioner "local-exec" {
-    command = <<EOT
-      kubectl wait --namespace airflow \
-        --for=condition=ready pod \
-        --selector=app.kubernetes.io/name=airflow-webserver \
-        --timeout=300s
-    EOT
-  }
-
-  depends_on = [kubernetes_ingress_v1.airflow_ingress]
-}
 
 data "kubernetes_service" "airflow_server" {
   metadata {
     name      = "airflow-webserver"
     namespace = "airflow"
   }
-  depends_on = [null_resource.wait_for_lb]
 }
 data "kubernetes_service" "nginx_ingress" {
   metadata {
@@ -102,10 +88,7 @@ data "kubernetes_service" "nginx_ingress" {
 }
 
 data "aws_lb" "nginx_ingress" {
-  tags = {
-    "kubernetes.io/cluster/EKS-01" = "shared"
-    "kubernetes.io/service-name"                = "kube-system/nginx-ingress-ingress-nginx-controller"
-  }
+  name = "k8s-kubesyst-nginxing-08335d4703"
 }
 
 resource "aws_route53_record" "airflow" {
@@ -143,4 +126,3 @@ resource "aws_route53_health_check" "airflow" {
   depends_on = [aws_route53_record.airflow]
 }
 
-*/
