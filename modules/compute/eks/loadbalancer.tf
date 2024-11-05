@@ -1,3 +1,10 @@
+resource "null_resource" "install_crds" {
+  provisioner "local-exec" {
+    command = "kubectl apply -k github.com/aws/eks-charts/stable/aws-load-balancer-controller/crds?ref=master"
+  }
+
+}
+
 resource "aws_iam_role" "aws_load_balancer_controller" {
   name = "aws-load-balancer-controller"
 
@@ -55,7 +62,7 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = aws_iam_role.aws_load_balancer_controller.arn
   }
 
-  depends_on = [module.eks, aws_iam_role_policy_attachment.aws_load_balancer_controller]
+  depends_on = [module.eks, aws_iam_role_policy_attachment.aws_load_balancer_controller, null_resource.install_crds]
 
 }
 
