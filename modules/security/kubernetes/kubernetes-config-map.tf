@@ -1,3 +1,7 @@
+
+data "aws_caller_identity" "current" {}
+
+
 resource "kubernetes_config_map" "aws_auth" {
   metadata {
     name      = "aws-auth"
@@ -16,17 +20,17 @@ resource "kubernetes_config_map" "aws_auth" {
         ],
         [
           {
-            #rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sDev"
+            rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sDev"
             username = "dev-user"
             groups   = []
           },
           {
-            #rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sInteg"
+            rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sInteg"
             username = "integ-user"
             groups   = []
           },
           {
-           # rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sAdmin"
+            rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sAdmin"
             username = "admin"
             groups   = ["system:masters"]
           }
@@ -35,3 +39,4 @@ resource "kubernetes_config_map" "aws_auth" {
     )
   }
 }
+
