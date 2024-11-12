@@ -21,17 +21,17 @@ terraform {
         source  = "hashicorp/random"
         version = "3.5.1"
       }
-      argocd = {
-        source  = "argoproj-labs/argocd"
-        version = "7.0.0"
+      null = {
+        source = "hashicorp/null"
+        version = "3.2.3"
       }
     }
   backend "s3" {
-    bucket         = "terraform-state-networking-infinitydataservices-com"
-    key            = "terrafrom-state/vpc-production-01/terraform.tfstate"
+    bucket         = "terraform-state-infinitydataservices-com"
+    key            = "terraform-state-production-01/networking/vpc/terraform.tfstate"
     region         = "eu-north-1"
     encrypt        = true
-    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+    kms_key_id     = env("TF_VAR_KMS_KEY_ID")
 
   }
 }

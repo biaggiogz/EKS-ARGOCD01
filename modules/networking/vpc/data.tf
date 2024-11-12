@@ -1,4 +1,5 @@
 
+/*
 data "terraform_remote_state" "eks" {
   backend = "s3"
 
@@ -24,21 +25,25 @@ data "terraform_remote_state" "networking-SG-airflow-EKS-01" {
 
   }
 }
-
+*/
 
 data "terraform_remote_state" "global-variables" {
   backend = "s3"
 
   config = {
     bucket         = "terraform-state-infinitydataservices-com"
-    key            = "ArchitectElevatorAWS/modules/terraform.tfstate"
-    region = "eu-north-1"
+    key            = "ArchitectElevatorAWS/production-01/module/terraform.tfstate"
+    region         = "eu-north-1"
     encrypt    = true
-    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+    kms_key_id     = env("TF_VAR_KMS_KEY_ID")
+
 
   }
 }
 
+
+data "aws_availability_zones" "available" {}
+data "aws_region" "current" {}
 
 
 
