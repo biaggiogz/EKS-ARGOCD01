@@ -1,8 +1,20 @@
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-infinitydataservices-com"
+    key            = "ArchitectElevatorAWS/production-01/module/terraform.tfstate"
+    region         = "eu-north-1"
+    encrypt        = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+    #dynamodb_table = "terraform-state-lock"
+  }
+}
+
+
 provider "aws" {
   region = "eu-north-1"
 }
 
-locals {
+locals { # Replace with your desired environment name
   modules = [
     "networking",
     "compute",
@@ -14,25 +26,22 @@ locals {
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  for_each = toset(local.modules)
+  bucket = "terraform-state-${var.environment_name}"
+  force_destroy = true
 
-  bucket = "terraform-state-${each.key}-infinitydataservices-com"
-
-  lifecycle {
+  /*lifecycle {
     prevent_destroy = true
-  }
+  }*/
 
   tags = {
-    Name        = "Terraform State for ${each.key}"
-   # Environment = "Management"
+    Name        = "Terraform State"
+    Environment = var.environment_name
     ManagedBy   = "Terraform"
   }
 }
 
 resource "aws_s3_bucket_versioning" "terraform_state" {
-  for_each = aws_s3_bucket.terraform_state
-
-  bucket = each.value.id
+  bucket = aws_s3_bucket.terraform_state.id
 
   versioning_configuration {
     status = "Enabled"
@@ -40,9 +49,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
-  for_each = aws_s3_bucket.terraform_state
-
-  bucket = each.value.id
+  bucket = aws_s3_bucket.terraform_state.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -51,6 +58,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
+resource "aws_s3_object" "module_folders" {
+  for_each = toset(local.modules)
+
+  bucket = aws_s3_bucket.terraform_state.id
+  key    = "${each.key}/"
+  content_type = "application/x-directory"
+}
+/*
 resource "aws_dynamodb_table" "terraform_state_lock" {
   name           = "terraform-state-lock"
   read_capacity  = 1
@@ -69,6 +84,11 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
   }
 }
 
-output "s3_bucket_names" {
-  value = { for k, v in aws_s3_bucket.terraform_state : k => v.id }
+output "module_state_keys" {
+  value = {
+    for module in local.modules :
+    module => "${module}/terraform.tfstate"
+  }
 }
+
+*/
