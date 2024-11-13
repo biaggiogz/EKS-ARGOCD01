@@ -68,7 +68,6 @@ module "eks" {
     }
   ]*/
 
-  # Combine root account, current user/role and additional roles to be able to access the cluster KMS key - required for terraform updates
   kms_key_administrators = distinct(concat([
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
     [data.aws_iam_session_context.current.issuer_arn]
@@ -91,7 +90,6 @@ module "eks" {
       }
     }
   }
-  # Extend cluster security group rules
   cluster_security_group_additional_rules = {
     ingress_nodes_ephemeral_ports_tcp = {
       description                = "Nodes on ephemeral ports"
@@ -103,7 +101,6 @@ module "eks" {
     }
   }
 
-  # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {
       description = "Node to node all ports/protocols"
@@ -113,9 +110,6 @@ module "eks" {
       type        = "ingress"
       self        = true
     }
-    # Allows Control Plane Nodes to talk to Worker nodes on all ports. Added this to simplify the example and further avoid issues with Add-ons communication with Control plane.
-    # This can be restricted further to specific port based on the requirement for each Add-on e.g., metrics-server 4443, spark-operator 8080, karpenter 8443 etc.
-    # Change this according to your security requirements if needed
     ingress_cluster_to_node_all_traffic = {
       description                   = "Cluster API to Nodegroup all traffic"
       protocol                      = "-1"
@@ -128,24 +122,19 @@ module "eks" {
 
   eks_managed_node_group_defaults = {
     iam_role_additional_policies = {
-      # Not required, but used in the example to access the nodes to inspect mounted volumes
       AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
     }
   }
 
   eks_managed_node_groups = {
-    #  We recommend to have a MNG to place your critical workloads and add-ons
-    #  Then rely on Karpenter to scale your workloads
-    #  You can also make uses on nodeSelector and Taints/tolerations to spread workloads on MNG or Karpenter provisioners
     core_node_group = {
-      name       = "core-node-group"
+      name       = "core-node-group-${local.cluster_name}"
       description = "EKS Core node group for hosting critical add-ons"
-      # Filtering only Secondary CIDR private subnets starting with "100.". Subnet IDs where the nodes/node groups will be provisioned
       subnet_ids = compact([for subnet_id, cidr_block in zipmap(local.private_subnets, local.private_subnets_cidr_blocks) : substr(cidr_block, 0, 4) == "100." ? subnet_id : null])
 
-      min_size      = 0
-      max_size      = 3
-      desired_size  = 2
+      min_size      = 2
+      max_size      = 4
+      desired_size  = 3
       ami_type      = "AL2_x86_64"
       capacity_type = "SPOT"
 
@@ -177,34 +166,8 @@ module "eks" {
   }
 
 
-  /*cluster_addons = {
-    eks-pod-identity-agent = {
-      most_recent = true
-    }
-    coredns                = {
-      most_recent = true
-    }
-    kube-proxy             = {
-      most_recent = true
-    }
-    vpc-cni = {
-      before_compute = true
-      most_recent    = true # To ensure access to the latest settings provided
-      configuration_values = jsonencode({
-        env = {
-          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-          # ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
-          # AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = true
-        }
-      })
-    }
-
-  }*/
   tags = {
     Blueprint  = data.terraform_remote_state.global-variables.outputs.cluster_name
-    #GithubRepo = "github.com/aws-samples/eks-blueprints-for-terraform-workshop"
   }
   depends_on = [
     aws_iam_role_policy_attachment.eks_node_policy,
