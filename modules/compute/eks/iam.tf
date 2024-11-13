@@ -11,10 +11,10 @@ module "ebs_csi_driver_irsa" {
     }
   }
   tags = local.tags
+  depends_on = [module.eks]
 }
 
 resource "aws_iam_role" "eks_admin" {
-  #count = var.create_iam_roles ? 0 : 1
   name  = "${local.name}-${local.cluster_name}-eks-admin"
 
   assume_role_policy = jsonencode({
@@ -56,7 +56,6 @@ resource "aws_iam_role_policy_attachment" "eks_node_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
-  #count = var.create_iam_roles ? 0 : 1
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.eks_nodes.name
 }
@@ -74,4 +73,31 @@ resource "aws_iam_role_policy_attachment" "eks_loadbalancer_policy" {
 resource "aws_iam_role_policy_attachment" "eks_ec2_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
   role       = aws_iam_role.eks_nodes.name
+}
+
+resource "aws_iam_role" "aws_load_balancer_controller" {
+  name = "aws-load-balancer-controller"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Effect = "Allow"
+      Principal = {
+        Federated = module.eks.oidc_provider_arn
+      }
+      Condition = {
+        StringEquals = {
+          "${module.eks.oidc_provider}:sub" : "system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
+  policy_arn = data.aws_iam_policy.aws_load_balancer_controller.arn
+  role       = aws_iam_role.aws_load_balancer_controller.name
+
+  depends_on = [aws_iam_role.aws_load_balancer_controller]
 }

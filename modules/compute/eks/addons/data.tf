@@ -40,17 +40,7 @@ data "terraform_remote_state" "global-variables" {
 
   }
 }
-variable "r53_hosted_zone_id" {
-  description = "AWS Route 53 Hosted Zone ID"
-  type        = string
-  default = "Z10018721PYSS6EZR6SR5"
-}
 
-variable "public_dns_name" {
-  description = "Public DNS name created in AWS Route 53"
-  type        = string
-  default = "infinitydataservices.com"
-}
 
 data "aws_route53_zone" "selected" {
   zone_id = var.r53_hosted_zone_id

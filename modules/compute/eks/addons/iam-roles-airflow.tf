@@ -1,4 +1,4 @@
-
+/*
 
 resource "kubernetes_namespace_v1" "airflow" {
   metadata {
@@ -369,3 +369,4 @@ resource "aws_security_group" "efs" {
 
   tags = local.tags
 }
+*/

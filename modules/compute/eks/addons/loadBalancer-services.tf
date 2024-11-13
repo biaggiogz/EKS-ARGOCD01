@@ -1,4 +1,4 @@
-resource "aws_acm_certificate" "own_acm_airflow" {
+/*resource "aws_acm_certificate" "own_acm_airflow" {
   domain_name               = "airflow.production.${var.public_dns_name}"
   subject_alternative_names = ["*.production.${var.public_dns_name}", "production.${var.public_dns_name}"]
   validation_method         = "DNS"
@@ -37,7 +37,44 @@ resource "aws_acm_certificate_validation" "cert_validation" {
     create = "5m"
   }
 }
+resource "kubernetes_ingress_v1" "airflow_webserver_ingress" {
+  metadata {
+    name      = "airflow-webserver-ingress"
+    namespace = "airflow"
+    annotations = {
+      "kubernetes.io/ingress.class"                  = "alb"
+      "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type"        = "ip"
+      "alb.ingress.kubernetes.io/listen-ports"       = jsonencode([{ HTTP = 80}, { HTTPS = 443}])
+      "alb.ingress.kubernetes.io/certificate-arn"    = aws_acm_certificate.own_acm_airflow.arn
+      "alb.ingress.kubernetes.io/ssl-policy"         = "ELBSecurityPolicy-TLS-1-2-2017-01"
+      "alb.ingress.kubernetes.io/subnets"            = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
+      "alb.ingress.kubernetes.io/healthcheck-path"   = "/health"
+      "external-dns.alpha.kubernetes.io/hostname"    = "airflow.production.infinitydataservices.com"
+    }
+  }
 
+  spec {
+    rule {
+      http {
+        path {
+          path = "/*"
+          backend {
+            service {
+              name = "airflow-webserver"
+              port {
+                number = 8080
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+*/
+
+/*
 resource "aws_security_group" "alb" {
   name        = "eks-alb-sg"
   description = "Security group for EKS ALB"
@@ -70,13 +107,20 @@ resource "aws_lb" "main" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = data.terraform_remote_state.vpc.outputs.public_subnets
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
   tags = {
     Environment = "production"
   }
   depends_on = [aws_security_group.alb]
 }
+
+
+
+
+*/
+
+
 /*
 resource "kubernetes_ingress_v1" "airflow_ingress" {
   metadata {

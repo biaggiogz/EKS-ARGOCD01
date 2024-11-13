@@ -1,4 +1,4 @@
-module "eks_data_addons" {
+/*module "eks_data_addons" {
   source  = "aws-ia/eks-data-addons/aws"
   version = ">=1.33.0" # ensure to update this to the latest/desired version
 
@@ -10,6 +10,7 @@ module "eks_data_addons" {
   airflow_helm_config = {
     namespace = local.airflow_namespace
     version   = "1.14.0"
+    createNamespace  = false
 
     values = [templatefile("${path.module}/helm-values/airflow-values.yaml", {
 
@@ -25,9 +26,10 @@ module "eks_data_addons" {
       s3_bucket_name        = try(module.airflow_s3_bucket[0].s3_bucket_id, "")
       webserver_secret_name = local.airflow_webserver_secret_name
       efs_pvc               = local.efs_pvc
+      aws_acm_certificatearn = aws_acm_certificate.own_acm_airflow.arn
     })]
   }
 
 
 
-}
+}*/

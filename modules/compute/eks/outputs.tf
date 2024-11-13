@@ -12,10 +12,12 @@ output "cluster_name" {
 output "cluster_endpoint" {
   description = "Cluster Hub endpoint"
   value       = module.eks.cluster_endpoint
+  sensitive = true
 }
 output "cluster_certificate_authority_data" {
   description = "Cluster Hub certificate_authority_data"
   value       = module.eks.cluster_certificate_authority_data
+  sensitive = true
 }
 output "cluster_region" {
   description = "Cluster Hub region"
@@ -79,9 +81,8 @@ output "cluster_oidc_issuer_url" {
   sensitive = true
 
 }
-/*
-output "eks_managed_node_group_subnets" {
-  description = "List of subnet IDs used for EKS managed node groups"
-  value       = values(module.eks.eks_managed_node_groups)[*].subnet_ids
+
+output "aws_load_balancer_controller-arn" {
+  value =  aws_iam_role.aws_load_balancer_controller.arn
+  sensitive = true
 }
-*/

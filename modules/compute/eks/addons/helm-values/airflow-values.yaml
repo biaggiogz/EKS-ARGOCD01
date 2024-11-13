@@ -12,6 +12,17 @@ airflow:
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql://${airflow_db_user}:${airflow_db_pass}@${airflow_db_host}:5432/${airflow_db_name}
     AIRFLOW__CORE__EXECUTOR: KubernetesExecutor
 
+  image:
+    repository: apache/airflow
+    tag: 2.8.4-python3.9
+    pullPolicy: IfNotPresent
+    pullSecret: ""
+    uid: 50000
+    gid: 0
+
+    executor: KubernetesExecutor
+
+
 postgresql:
   enabled: false
 
@@ -103,15 +114,15 @@ scheduler:
 ###################################
 # Airflow triggerer settings
 ###################################
-triggerer:
-  resources:
-    limits:
-      cpu: "0.5"
-      memory: 512Mi
-    requests:
-      cpu: "0.25"
-      memory: 256Mi
-  replicas: 1
+#triggerer:
+  #resources:
+    #limits:
+      #cpu: "0.5"
+      #memory: 512Mi
+    #requests:
+      #cpu: "0.25"
+      #memory: 256Mi
+  #replicas: 1
 ###################################
 # Airflow webserver settings
 ###################################
@@ -149,6 +160,7 @@ webserver:
   service:
     type: ClusterIP
     #type: NodePort
+
 
   # Create ServiceAccount
   serviceAccount:
