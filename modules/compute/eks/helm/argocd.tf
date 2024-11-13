@@ -1,12 +1,24 @@
+/*
+variable "PASSARCOGCD" {
+  type = string
+}
 
+resource "aws_secretsmanager_secret" "argocd_credentials" {
+  name = "argocd-credentials"
+}
 
+resource "aws_secretsmanager_secret_version" "argocd_credentials" {
+  secret_id     = aws_secretsmanager_secret.argocd_credentials.id
+  secret_string = jsonencode({
+    username = "admin"
+    password = var.PASSARCOGCD
+  })
+}
 
-
-
-
+*/
 resource "aws_acm_certificate" "own_acm_argocd" {
-  domain_name               = "argo.production.${var.public_dns_name}"
-  subject_alternative_names = ["*.production.${var.public_dns_name}", "production.${var.public_dns_name}"]
+  domain_name               = "argo.production.${local.public_dns_name}"
+  subject_alternative_names = ["*.production.${local.public_dns_name}", "production.${local.public_dns_name}"]
 
   validation_method = "DNS"
 
@@ -15,11 +27,6 @@ resource "aws_acm_certificate" "own_acm_argocd" {
   }
 }
 
-data "aws_route53_zone" "selected" {
-  zone_id = var.r53_hosted_zone_id
-  name         = var.public_dns_name
-  private_zone = false
-}
 
 resource "aws_route53_record" "cert_validation_record" {
   for_each = {
@@ -59,13 +66,20 @@ resource "null_resource" "wait_for_cert_validation" {
     command = "sleep 60"
   }
 }
+resource "kubernetes_namespace" "argocd" {
+
+  metadata {
+    labels = local.labels
+    name   = "argocd"
+  }
+}
 
 resource "helm_release" "argocd" {   ###############This resource is who create the load balancer in ec2 aws
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
   namespace        = "argocd"
-  create_namespace = true
+  create_namespace = false
   version          = "7.6.4"
 
   values = [
@@ -79,14 +93,12 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
             "service.beta.kubernetes.io/aws-load-balancer-type"            = "nlb"
             "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
             "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
-            "service.beta.kubernetes.io/aws-load-balancer-subnets"         = "subnet-018b41dec416c9d3c,subnet-01158c8897a13ec73"
+            "service.beta.kubernetes.io/aws-load-balancer-subnets"         = "subnet-00ac5fca9e079110b,subnet-031af53880f34a2fe"
             "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"        = aws_acm_certificate.own_acm_argocd.arn
             "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"       = "443"
             "external-dns.alpha.kubernetes.io/hostname"                    = "argo.production.infinitydataservices.com"
             "service.beta.kubernetes.io/aws-load-balancer-backend-protocol" = "http"
             "service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
-            #"alb.ingress.kubernetes.io/listen-ports"                       = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-            #"alb.ingress.kubernetes.io/actions.ssl-redirect"               = "{\"Type\": \"redirect\", \"RedirectConfig\": { \"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
           }
         }
         extraArgs = [
@@ -95,18 +107,20 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
       }
       configs = {
         params = {
-          "server.insecure" = true
+          #"server.insecure" = true
         }
       }
     })
   ]
 
 
-  timeout = 300
+  timeout = 120
 
-  depends_on = [helm_release.aws_load_balancer_controller, aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm_argocd,null_resource.wait_for_cert_validation]
+  depends_on = [aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm_argocd,null_resource.wait_for_cert_validation]
 }
 
+
+/*
 resource "null_resource" "wait_for_lb" {
   depends_on = [helm_release.argocd]
 
@@ -132,7 +146,7 @@ data "kubernetes_service" "argocd_server" {
 
 data "aws_lb" "argocd" {
   tags = {
-    "kubernetes.io/cluster/EKS-ArgoCD-01" = "owned"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
     "kubernetes.io/service-name" = "argocd/argocd-server"
   }
   depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server]
@@ -141,7 +155,7 @@ data "aws_lb" "argocd" {
 
 resource "aws_route53_record" "argocd" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "argo.production.${var.public_dns_name}"
+  name    = "argo.production.${local.public_dns_name}"
   type    = "A"
   weighted_routing_policy {
     weight = 100
@@ -156,11 +170,11 @@ resource "aws_route53_record" "argocd" {
     evaluate_target_health = true
   }
 
-  depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, aws_iam_role_policy_attachment.aws_load_balancer_controller, data.aws_lb.argocd]
+  depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, data.aws_lb.argocd]
 }
 
 resource "aws_route53_health_check" "argocd" {
-  fqdn              = "argo.production.${var.public_dns_name}"
+  fqdn              = "argo.production.${local.public_dns_name}"
   port              = 443
   type              = "HTTPS"
   resource_path     = "/"
@@ -172,7 +186,4 @@ resource "aws_route53_health_check" "argocd" {
   }
   depends_on = [aws_route53_record.argocd ]
 }
-
-
-
-
+*/
