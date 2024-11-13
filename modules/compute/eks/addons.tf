@@ -1,7 +1,6 @@
 
 
 
-
 module "eks_blueprints_addons" {
   # Short commit hash from 8th May using git rev-parse --short HEAD
   source  = "aws-ia/eks-blueprints-addons/aws"
@@ -12,9 +11,7 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
 
-  #---------------------------------------
-  # Amazon EKS Managed Add-ons
-  #---------------------------------------
+
   eks_addons = {
     aws-ebs-csi-driver = {
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
@@ -43,12 +40,14 @@ module "eks_blueprints_addons" {
 
   enable_aws_efs_csi_driver = true
 
-  enable_aws_load_balancer_controller = true
+  #enable_aws_load_balancer_controller = true
 
   enable_metrics_server = true
   metrics_server = {
     values = [templatefile("${path.module}/helm-values/metrics-server-values.yaml", {})]
   }
+
+
  /*
   enable_cluster_autoscaler = true
   cluster_autoscaler = {
@@ -59,9 +58,7 @@ module "eks_blueprints_addons" {
   }
 */
 
-  #---------------------------------------
-  # CloudWatch metrics for EKS
-  #---------------------------------------
+
   enable_aws_cloudwatch_metrics = true
   aws_cloudwatch_metrics = {
     values = [
@@ -69,10 +66,10 @@ module "eks_blueprints_addons" {
         resources:
           limits:
             cpu: 500m
-            memory: 2Gi
+            memory: 1Gi
           requests:
             cpu: 200m
-            memory: 1Gi
+            memory: 800Mi
 
         # This toleration allows Daemonset pod to be scheduled on any node, regardless of their Taints.
         tolerations:
@@ -82,4 +79,6 @@ module "eks_blueprints_addons" {
   }
 
   tags = local.tags
+
+  depends_on = [module.eks]
 }
