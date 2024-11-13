@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "terraform-state-infinitydataservices-com"
-    key            = "ArchitectElevatorAWS/production-01/module/terraform.tfstate"
+    key            = "ArchitectElevatorAWS/production-01/modules/terraform.tfstate"
     region         = "eu-north-1"
     encrypt        = true
     kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
@@ -62,7 +62,7 @@ resource "aws_s3_object" "module_folders" {
   for_each = toset(local.modules)
 
   bucket = aws_s3_bucket.terraform_state.id
-  key    = "${each.key}/"
+  key    = "modules/${each.key}/"
   content_type = "application/x-directory"
 }
 /*
