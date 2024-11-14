@@ -1,15 +1,12 @@
 
-
-
 module "eks_blueprints_addons" {
-  # Short commit hash from 8th May using git rev-parse --short HEAD
   source  = "aws-ia/eks-blueprints-addons/aws"
   version = "~> 1.18"
 
-  cluster_name      = module.eks.cluster_name
-  cluster_endpoint  = module.eks.cluster_endpoint
-  cluster_version   = module.eks.cluster_version
-  oidc_provider_arn = module.eks.oidc_provider_arn
+  cluster_name      = local.cluster_name
+  cluster_endpoint  = local.cluster_endpoint
+  cluster_version   = local.cluster_version
+  oidc_provider_arn = local.eks_oidc_provider_arn
 
 
   eks_addons = {
@@ -42,11 +39,11 @@ module "eks_blueprints_addons" {
 
   #enable_aws_load_balancer_controller = true
 
-  enable_metrics_server = true
+  /*enable_metrics_server = true
   metrics_server = {
     values = [templatefile("${path.module}/helm-values/metrics-server-values.yaml", {})]
   }
-
+*/
 
  /*
   enable_cluster_autoscaler = true
@@ -78,7 +75,7 @@ module "eks_blueprints_addons" {
     ]
   }
 
-  tags = local.tags
+  tags = local.labels
 
-  depends_on = [module.eks]
+  depends_on = [module.ebs_csi_driver_irsa]
 }

@@ -14,6 +14,9 @@ output "cluster_endpoint" {
   value       = module.eks.cluster_endpoint
   sensitive = true
 }
+output "cluster_version" {
+  value = module.eks.cluster_version
+}
 output "cluster_certificate_authority_data" {
   description = "Cluster Hub certificate_authority_data"
   value       = module.eks.cluster_certificate_authority_data
@@ -75,6 +78,8 @@ output "eks_oidc_provider_arn" {
   sensitive = true
 
 }
+
+
 
 output "cluster_oidc_issuer_url" {
   value = module.eks.cluster_oidc_issuer_url
