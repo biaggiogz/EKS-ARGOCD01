@@ -1,21 +1,24 @@
-/*
+
 variable "PASSARCOGCD" {
   type = string
 }
 
 resource "aws_secretsmanager_secret" "argocd_credentials" {
-  name = "argocd-credentials"
+  name = "argocd-credential-admin"
+  recovery_window_in_days = 7
+
 }
 
 resource "aws_secretsmanager_secret_version" "argocd_credentials" {
   secret_id     = aws_secretsmanager_secret.argocd_credentials.id
-  secret_string = jsonencode({
-    username = "admin"
-    password = var.PASSARCOGCD
-  })
+  secret_string =  var.PASSARCOGCD
+ # secret_string = jsonencode({
+  #  username = "admin"
+   # password = var.PASSARCOGCD
+  #})
 }
 
-*/
+
 resource "aws_acm_certificate" "own_acm_argocd" {
   domain_name               = "argo.production.${local.public_dns_name}"
   subject_alternative_names = ["*.production.${local.public_dns_name}", "production.${local.public_dns_name}"]
@@ -73,6 +76,23 @@ resource "kubernetes_namespace" "argocd" {
     name   = "argocd"
   }
 }
+resource "kubernetes_namespace" "argo-events" {
+
+  metadata {
+    labels = local.labels
+    name   = "argo-events"
+  }
+}
+resource "kubernetes_service_account" "argocd_secrets_sa" {
+  metadata {
+    name      = "argocd-secrets-sa"
+    namespace = "argocd"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = data.terraform_remote_state.eks.outputs.eks_secrets_manager_role-arn
+    }
+  }
+}
+
 
 resource "helm_release" "argocd" {   ###############This resource is who create the load balancer in ec2 aws
   name             = "argocd"
@@ -82,45 +102,68 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
   create_namespace = false
   version          = "7.6.4"
 
-  values = [
-    #file("values/argocd.yaml"),
-    yamlencode({
-      server = {
-        service = {
-          type = "LoadBalancer"
-          annotations = {
-            "service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout" = "60"
-            "service.beta.kubernetes.io/aws-load-balancer-type"            = "nlb"
-            "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip"
-            "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
-            "service.beta.kubernetes.io/aws-load-balancer-subnets"         = "subnet-00ac5fca9e079110b,subnet-031af53880f34a2fe"
-            "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"        = aws_acm_certificate.own_acm_argocd.arn
-            "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"       = "443"
-            "external-dns.alpha.kubernetes.io/hostname"                    = "argo.production.infinitydataservices.com"
-            "service.beta.kubernetes.io/aws-load-balancer-backend-protocol" = "http"
-            "service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
-          }
-        }
-        extraArgs = [
-          "--insecure"
-        ]
-      }
-      configs = {
-        params = {
-          #"server.insecure" = true
-        }
-      }
+  values = [ templatefile("${path.module}/helm-values/argocd-values.yaml",{
+
+    own_acm_argocd_arn = aws_acm_certificate.own_acm_argocd.arn
+    public_subnets = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
+    admin_password = aws_secretsmanager_secret_version.argocd_credentials.secret_string
     })
   ]
 
 
   timeout = 120
 
-  depends_on = [aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm_argocd,null_resource.wait_for_cert_validation]
+  depends_on = [kubernetes_service_account.argocd_secrets_sa, aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm_argocd,null_resource.wait_for_cert_validation, aws_secretsmanager_secret_version.argocd_credentials]
 }
 
-
 /*
+resource "null_resource" "delete_secret_argocd" {
+  #  kubectl patch secret argocd-secret -n argocd -p '{"data": {"admin.password": null, "admin.passwordMtime": null}}'
+  #      kubectl delete pods -n argocd -l app.kubernetes.io/name=argocd-server
+  provisioner "local-exec" {
+    command = <<EOT
+      kubectl rollout restart deployment argocd-server -n argocd
+      export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+      export ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+      argocd login $ARGOCD_SERVER --username admin --password $ADMIN_PASSWORD --insecure
+      argocd account update-password --account admin --current-password $ADMIN_PASSWORD --new-password ${aws_secretsmanager_secret_version.argocd_credentials.secret_string}
+    EOT
+  }
+  depends_on = [helm_release.argocd]
+}
+*/
+/*
+resource "kubernetes_secret" "argocd_secret_patch" {
+  metadata {
+    name      = "argocd-secret"
+    namespace = "argocd"
+  }
+
+  data = {
+    "admin.password"      = bcrypt(aws_secretsmanager_secret_version.argocd_credentials.secret_string)
+    "admin.passwordMtime" = timestamp()
+  }
+
+  type = "Opaque"
+
+  lifecycle {
+    ignore_changes = [
+      data["admin.passwordMtime"]
+    ]
+  }
+  depends_on = [helm_release.argocd, aws_secretsmanager_secret_version.argocd_credentials, null_resource.delete_secret_argocd]
+}
+resource "null_resource" "rollout_secret_argocd" {
+
+  provisioner "local-exec" {
+
+    command = <<EOT
+      kubectl rollout restart deployment argocd-server -n argocd
+    EOT
+  }
+}
+*/
+
 resource "null_resource" "wait_for_lb" {
   depends_on = [helm_release.argocd]
 
@@ -129,7 +172,7 @@ resource "null_resource" "wait_for_lb" {
       kubectl wait --namespace argocd \
         --for=condition=ready pod \
         --selector=app.kubernetes.io/name=argocd-server \
-        --timeout=300s
+        --timeout=60s
     EOT
   }
 }
@@ -146,8 +189,9 @@ data "kubernetes_service" "argocd_server" {
 
 data "aws_lb" "argocd" {
   tags = {
-    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/service-name" = "argocd/argocd-server"
+    "elbv2.k8s.aws/cluster" = data.terraform_remote_state.global-variables.outputs.cluster_name
+    "service.k8s.aws/resource" = "LoadBalancer"
+    "service.k8s.aws/stack" = "argocd/argocd-server"
   }
   depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server]
 
@@ -170,7 +214,7 @@ resource "aws_route53_record" "argocd" {
     evaluate_target_health = true
   }
 
-  depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, data.aws_lb.argocd]
+  depends_on = [kubernetes_namespace.argocd,helm_release.argocd, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, data.aws_lb.argocd]
 }
 
 resource "aws_route53_health_check" "argocd" {
@@ -186,4 +230,48 @@ resource "aws_route53_health_check" "argocd" {
   }
   depends_on = [aws_route53_record.argocd ]
 }
-*/
+
+resource "helm_release" "argo-events" {   #
+  name             = "argo-events"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-events"
+  namespace        = "argo-events"
+  create_namespace = false
+  version          = "2.4.7"
+
+  values = [ templatefile("${path.module}/helm-values/argo-events-values.yaml",{
+
+  })
+  ]
+
+
+  timeout = 120
+
+  depends_on = [kubernetes_namespace.argo-events]
+}
+
+
+/*
+resource "null_resource" "disable_local_admin_configmap" {
+  provisioner "local-exec" {
+    command = <<EOT
+      kubectl delete configmap argocd-cm -n argocd
+    EOT
+  }
+  depends_on = [helm_release.argocd]
+}
+
+
+resource "kubernetes_config_map" "disable-local-admin-argocd" {
+  metadata {
+    name = "argocd-cm"
+    namespace = "argocd"
+    labels = {
+      "app.kubernetes.io/part-of" : "argocd"
+    }
+  }
+  data = {
+    "admin.enabled" = "false"
+  }
+  depends_on = [null_resource.disable_local_admin_configmap]
+}*/

@@ -86,3 +86,7 @@ output "aws_load_balancer_controller-arn" {
   value =  aws_iam_role.aws_load_balancer_controller.arn
   sensitive = true
 }
+
+output "eks_secrets_manager_role-arn" {
+  value = aws_iam_role.eks_secrets_manager_role.arn
+}

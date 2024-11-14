@@ -1,0 +1,23 @@
+server:
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-subnets: ${public_subnets}
+      service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${own_acm_argocd_arn}
+      service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+      external-dns.alpha.kubernetes.io/hostname: argo.production.infinitydataservices.com
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+      service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+      #service.beta.kubernetes.io/aws-load-balancer-name: "LoadBalancer-ArgoCD"
+  extraArgs:
+    - "--insecure"
+
+#configs:
+  #secret:
+    #argocdServerAdminPassword: ${admin_password}
+    #admin.enabled: true
+  #params: {}
