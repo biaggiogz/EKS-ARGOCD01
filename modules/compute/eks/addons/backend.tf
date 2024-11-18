@@ -65,3 +65,13 @@ provider "kubectl" {
   load_config_file       = false
   token                  = data.terraform_remote_state.eks.outputs.kubectl.token
 }
+
+provider "aws" {
+  region = "eu-north-1"
+
+}
+
+provider "aws" {
+  alias  = "ecr"
+  region = "us-east-1"
+}

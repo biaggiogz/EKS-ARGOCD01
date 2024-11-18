@@ -66,3 +66,7 @@ data "terraform_remote_state" "global-variables" {
   }
 }
 
+
+data "aws_eks_cluster_auth" "this" {
+  name = local.cluster_name
+}

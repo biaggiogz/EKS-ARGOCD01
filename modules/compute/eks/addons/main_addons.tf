@@ -37,6 +37,7 @@ module "eks_blueprints_addons" {
 
   enable_aws_efs_csi_driver = true
 
+
   #enable_aws_load_balancer_controller = true
 
   /*enable_metrics_server = true
@@ -77,5 +78,29 @@ module "eks_blueprints_addons" {
 
   tags = local.labels
 
-  depends_on = [module.ebs_csi_driver_irsa]
+  depends_on = [module.ebs_csi_driver_irsa, module.eks-blueprints-addons]
+}
+
+
+module "eks-blueprints-addons" {
+  source  = "aws-ia/eks-blueprints-addons/aws"
+  version = "1.19.0"
+  cluster_name      = local.cluster_name
+  cluster_endpoint  = local.cluster_endpoint
+  cluster_version   = local.cluster_version
+  oidc_provider_arn = local.eks_oidc_provider_arn
+
+  enable_karpenter                  = true
+  karpenter_enable_spot_termination = true
+  karpenter_node = {
+    iam_role_additional_policies = {
+      AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    }
+  }
+  karpenter = {
+    chart_version       = "0.37.6"
+    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
+    repository_password = data.aws_ecrpublic_authorization_token.token.password
+  }
+
 }
