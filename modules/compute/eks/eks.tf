@@ -47,17 +47,7 @@ module "eks" {
   subnet_ids = compact([for subnet_id, cidr_block in zipmap(local.private_subnets,local.private_subnets_cidr_blocks) : substr(cidr_block, 0, 4) == "100." ? subnet_id : null])
   enable_cluster_creator_admin_permissions = true
 
-  /*aws_auth_roles = [
-    # We need to add in the Karpenter node IAM role for nodes launched by Karpenter
-    {
-      rolearn  = module.eks_blueprints_addons.karpenter.node_iam_role_arn
-      username = "system:node:{{EC2PrivateDNSName}}"
-      groups = [
-        "system:bootstrappers",
-        "system:nodes",
-      ]
-    }
-  ]*/
+
 
   kms_key_administrators = distinct(concat([
     "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
@@ -168,4 +158,23 @@ module "eks" {
     aws_iam_role_policy_attachment.eks_loadbalancer_policy
 
   ]
+}
+
+
+
+resource "kubernetes_config_map" "aws-auth" {
+  data = {
+    "mapRoles" = <<EOT
+- rolearn: arn:aws:iam::891377107274:role/KarpenterNodeRole-EKS-01
+  username: system:node:{{EC2PrivateDNSName}}
+  groups:
+    - system:bootstrappers
+    - system:nodes
+EOT
+  }
+
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
 }
