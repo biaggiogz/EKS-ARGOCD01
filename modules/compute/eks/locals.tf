@@ -4,6 +4,7 @@ locals {
   region = data.terraform_remote_state.global-variables.outputs.region
   name = data.terraform_remote_state.global-variables.outputs.environment_name
   cluster_name = data.terraform_remote_state.global-variables.outputs.cluster_name
+  karpenter_version = data.terraform_remote_state.global-variables.outputs.karpenter_version
   tags = {
     Blueprint  = local.name
   }

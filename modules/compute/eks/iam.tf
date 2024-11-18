@@ -133,5 +133,21 @@ resource "aws_iam_role" "eks_secrets_manager_role" {
 resource "aws_iam_role_policy_attachment" "secrets_manager_policy_attachment" {
   policy_arn = aws_iam_policy.secrets_manager_access.arn
   role       = aws_iam_role.eks_secrets_manager_role.name
-
 }
+
+
+
+data "http" "karpenter_cloudformation_template" {
+  url = "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v${local.karpenter_version}/website/content/en/preview/getting-started/getting-started-with-karpenter/cloudformation.yaml"
+}
+
+resource "aws_cloudformation_stack" "karpenter" {
+  name = "Karpenter-${local.cluster_name}"
+  template_body = data.http.karpenter_cloudformation_template.body
+  capabilities = ["CAPABILITY_NAMED_IAM"]
+
+  parameters = {
+    ClusterName = local.cluster_name
+  }
+}
+

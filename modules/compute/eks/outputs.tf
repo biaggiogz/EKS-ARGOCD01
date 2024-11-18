@@ -5,6 +5,7 @@ output "configure_kubectl" {
   EOT
 }
 
+
 output "cluster_name" {
   description = "Cluster Hub name"
   value       = module.eks.cluster_name
@@ -94,4 +95,8 @@ output "aws_load_balancer_controller-arn" {
 
 output "eks_secrets_manager_role-arn" {
   value = aws_iam_role.eks_secrets_manager_role.arn
+}
+
+output "karpenter_role" {
+  value = aws_cloudformation_stack.karpenter.iam_role_arn
 }
