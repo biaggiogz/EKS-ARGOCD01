@@ -26,5 +26,11 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = local.aws_load_balancer_controller-arn
   }
 
+  set {
+    name  = "vpcId"
+    value = data.terraform_remote_state.vpc.outputs.vpc_id
+  }
+
+
 
 }
