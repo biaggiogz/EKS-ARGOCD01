@@ -1,4 +1,4 @@
-
+/*
 variable "PASSARCOGCD" {
   type = string
 }
@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret_version" "argocd_credentials" {
    # password = var.PASSARCOGCD
   #})
 }
-
+*/
 
 resource "kubernetes_namespace" "argocd" {
 
@@ -25,7 +25,9 @@ resource "kubernetes_namespace" "argocd" {
     labels = local.labels
     name   = "argocd"
   }
+
 }
+
 resource "kubernetes_namespace" "argo-events" {
 
   metadata {
@@ -63,29 +65,17 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
 
     acm_certificate_arn = aws_acm_certificate.own_acm.arn
     public_subnets = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
-    #admin_password = aws_secretsmanager_secret_version.argocd_credentials.secret_string
     })
   ]
 
 
   timeout = 120
 
-  depends_on = [kubernetes_service_account.argocd_secrets_sa, aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm,null_resource.wait_for_cert_validation, aws_secretsmanager_secret_version.argocd_credentials]
+  depends_on = [kubernetes_service_account.argocd_secrets_sa, aws_acm_certificate_validation.cert_validation, aws_acm_certificate.own_acm,null_resource.wait_for_cert_validation]
 }
 
 
-resource "null_resource" "wait_for_lb" {
-  depends_on = [helm_release.argocd]
 
-  provisioner "local-exec" {
-    command = <<EOT
-      kubectl wait --namespace argocd \
-        --for=condition=ready pod \
-        --selector=app.kubernetes.io/name=argocd-server \
-        --timeout=60s
-    EOT
-  }
-}
 resource "helm_release" "argo-workflows" {   #
   name             = "argo-workflows"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -96,7 +86,7 @@ resource "helm_release" "argo-workflows" {   #
 
   values = [ templatefile("${path.module}/helm-values/argo-workflows-values.yaml",{
 
-    own_acm_argocd_arn = aws_acm_certificate.own_acm.arn
+    acm_certificate_arn = aws_acm_certificate.own_acm.arn
     public_subnets = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
 
   })
@@ -127,6 +117,18 @@ resource "helm_release" "argo-events" {   #
   depends_on = [kubernetes_namespace.argo-events]
 }
 
+resource "null_resource" "wait_for_lb" {
+  depends_on = [helm_release.argocd]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      kubectl wait --namespace argocd \
+        --for=condition=ready pod \
+        --selector=app.kubernetes.io/name=argocd-server \
+        --timeout=60s
+    EOT
+  }
+}
 data "kubernetes_service" "argocd_server" {
   metadata {
     name      = "argocd-server"
@@ -136,16 +138,19 @@ data "kubernetes_service" "argocd_server" {
 
 }
 
+
+
+
 data "aws_lb" "argocd" {
   tags = {
-    "kubernetes.io/cluster/EKS-01"= "owned"
-    "kubernetes.io/service-name" = "argocd/argocd-server"
+    "elbv2.k8s.aws/cluster"= "EKS-01"
+    "service.k8s.aws/stack" = "argocd/argocd-server"
   }
   depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server]
 
 }
 
-resource "aws_route53_record" "dae" {
+resource "aws_route53_record" "argocd" {
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = "argocd.dev.${local.public_dns_name}"
   type    = "A"
@@ -158,7 +163,7 @@ resource "aws_route53_record" "dae" {
 }
 
 
-resource "aws_route53_health_check" "dae" {
+resource "aws_route53_health_check" "argocd" {
   fqdn              = "dev.${local.public_dns_name}"
   port              = 443
   type              = "HTTPS"
@@ -169,9 +174,8 @@ resource "aws_route53_health_check" "dae" {
   tags = {
     Name = "argocd-health-check"
   }
-  depends_on = [aws_route53_record.dae ]
+  depends_on = [aws_route53_record.argocd]
 }
-
 
 resource "aws_acm_certificate" "own_acm" {
   domain_name               = "dev.${local.public_dns_name}"
@@ -224,214 +228,3 @@ resource "null_resource" "wait_for_cert_validation" {
   }
 }
 
-
-/*
-resource "kubernetes_ingress_v1" "argo_ingress" {
-  metadata {
-    name      = "argo-ingress"
-    namespace = "argocd"
-    annotations = {
-      "kubernetes.io/ingress.class"                    = "nginx"
-      "nginx.ingress.kubernetes.io/ssl-redirect"       = "true"
-      "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
-      "nginx.ingress.kubernetes.io/rewrite-target"     = "/$2"
-    }
-  }
-
-  spec {
-    tls {
-      hosts       = ["argo.production.${local.public_dns_name}"]
-      secret_name = "argocd-server-tls"
-    }
-
-    rule {
-      host = "argo.production.${local.public_dns_name}"
-      http {
-        path {
-          path = "/argocd(/|$)(.*)"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "argocd-server"
-              port {
-                number = 443
-              }
-            }
-          }
-        }
-        path {
-          path = "/argo-workflows(/|$)(.*)"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = "argo-workflows-server"
-              port {
-                number = 2746
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  depends_on = [
-    helm_release.argocd,
-    helm_release.argo-workflows,
-    helm_release.nginx_ingress
-  ]
-}
-/*
-data "aws_lb" "argocd" {
-  tags = {
-    "elbv2.k8s.aws/cluster" = data.terraform_remote_state.global-variables.outputs.cluster_name
-    "service.k8s.aws/resource" = "LoadBalancer"
-    "service.k8s.aws/stack" = "argocd/argocd-server"
-  }
-  depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server]
-
-}
-
-resource "aws_route53_record" "argocd" {
-  zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "argo.production.${local.public_dns_name}"
-  type    = "A"
-  weighted_routing_policy {
-    weight = 100
-  }
-
-  set_identifier = "argocd"
-
-
-  alias {
-    name                   = data.aws_lb.argocd.dns_name
-    zone_id                = data.aws_lb.argocd.zone_id
-    evaluate_target_health = true
-  }
-
-  depends_on = [kubernetes_namespace.argocd,helm_release.argocd, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, data.aws_lb.argocd]
-}
-
-resource "aws_route53_health_check" "argocd" {
-  fqdn              = "argo.production.${local.public_dns_name}"
-  port              = 443
-  type              = "HTTPS"
-  resource_path     = "/"
-  failure_threshold = "5"
-  request_interval  = "30"
-
-  tags = {
-    Name = "argocd-health-check"
-  }
-  depends_on = [aws_route53_record.argocd ]
-}
-
-resource "aws_route53_record" "argo-workflows" {
-  zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "argo-workflows.production.${local.public_dns_name}"
-  type    = "A"
-  weighted_routing_policy {
-    weight = 100
-  }
-
-  set_identifier = "argocd"
-
-
-  alias {
-    name                   = data.aws_lb.argocd.dns_name
-    zone_id                = data.aws_lb.argocd.zone_id
-    evaluate_target_health = true
-  }
-
-  depends_on = [kubernetes_namespace.argo-workflows,helm_release.argo-workflows, data.kubernetes_service.argocd_server, aws_acm_certificate_validation.cert_validation, data.aws_lb.argocd]
-}
-
-resource "aws_route53_health_check" "argo-workflows" {
-  fqdn              = "argo-workflows.production.${local.public_dns_name}"
-  port              = 443
-  type              = "HTTPS"
-  resource_path     = "/"
-  failure_threshold = "5"
-  request_interval  = "30"
-
-  tags = {
-    Name = "argocd-health-check"
-  }
-  depends_on = [aws_route53_record.argocd ]
-}
-
-
-
-
-/*
-resource "null_resource" "disable_local_admin_configmap" {
-  provisioner "local-exec" {
-    command = <<EOT
-      kubectl delete configmap argocd-cm -n argocd
-    EOT
-  }
-  depends_on = [helm_release.argocd]
-}
-
-
-resource "kubernetes_config_map" "disable-local-admin-argocd" {
-  metadata {
-    name = "argocd-cm"
-    namespace = "argocd"
-    labels = {
-      "app.kubernetes.io/part-of" : "argocd"
-    }
-  }
-  data = {
-    "admin.enabled" = "false"
-  }
-  depends_on = [null_resource.disable_local_admin_configmap]
-}
-
-
-resource "null_resource" "delete_secret_argocd" {
-  #  kubectl patch secret argocd-secret -n argocd -p '{"data": {"admin.password": null, "admin.passwordMtime": null}}'
-  #      kubectl delete pods -n argocd -l app.kubernetes.io/name=argocd-server
-  provisioner "local-exec" {
-    command = <<EOT
-      kubectl rollout restart deployment argocd-server -n argocd
-      export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
-      export ADMIN_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-      argocd login $ARGOCD_SERVER --username admin --password $ADMIN_PASSWORD --insecure
-      argocd account update-password --account admin --current-password $ADMIN_PASSWORD --new-password ${aws_secretsmanager_secret_version.argocd_credentials.secret_string}
-    EOT
-  }
-  depends_on = [helm_release.argocd]
-}
-
-
-resource "kubernetes_secret" "argocd_secret_patch" {
-  metadata {
-    name      = "argocd-secret"
-    namespace = "argocd"
-  }
-
-  data = {
-    "admin.password"      = bcrypt(aws_secretsmanager_secret_version.argocd_credentials.secret_string)
-    "admin.passwordMtime" = timestamp()
-  }
-
-  type = "Opaque"
-
-  lifecycle {
-    ignore_changes = [
-      data["admin.passwordMtime"]
-    ]
-  }
-  depends_on = [helm_release.argocd, aws_secretsmanager_secret_version.argocd_credentials, null_resource.delete_secret_argocd]
-}
-resource "null_resource" "rollout_secret_argocd" {
-
-  provisioner "local-exec" {
-
-    command = <<EOT
-      kubectl rollout restart deployment argocd-server -n argocd
-    EOT
-  }
-}
-*/

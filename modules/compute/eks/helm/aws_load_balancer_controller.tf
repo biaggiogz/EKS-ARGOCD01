@@ -16,21 +16,18 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = "true"
   }
 
-  set {
-    name  = "serviceAccount.name"
-    value = "aws-load-balancer-controller"
-  }
 
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = local.aws_load_balancer_controller-arn
   }
 
-  set {
-    name  = "vpcId"
-    value = data.terraform_remote_state.vpc.outputs.vpc_id
-  }
-
+   set {
+     name  = "vpcId"
+     value = data.terraform_remote_state.vpc.outputs.vpc_id
+   }
 
 
 }
+
+

@@ -72,7 +72,4 @@ data "aws_route53_zone" "selected" {
   private_zone = false
 }
 
-data "aws_secretsmanager_secret_version" "argocd_credentials" {
-  secret_id = aws_secretsmanager_secret.argocd_credentials.id
-  depends_on = [aws_secretsmanager_secret_version.argocd_credentials]
-}
+
