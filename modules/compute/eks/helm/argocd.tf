@@ -28,20 +28,7 @@ resource "kubernetes_namespace" "argocd" {
 
 }
 
-resource "kubernetes_namespace" "argo-events" {
 
-  metadata {
-    labels = local.labels
-    name   = "argo-events"
-  }
-}
-resource "kubernetes_namespace" "argo-workflows" {
-
-  metadata {
-    labels = local.labels
-    name   = "argo-workflows"
-  }
-}
 resource "kubernetes_service_account" "argocd_secrets_sa" {
   metadata {
     name      = "argocd-secrets-sa"
@@ -76,46 +63,7 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
 
 
 
-resource "helm_release" "argo-workflows" {   #
-  name             = "argo-workflows"
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-workflows"
-  namespace        = "argo-workflows"
-  create_namespace = false
-  version          = "0.42.6"
 
-  values = [ templatefile("${path.module}/helm-values/argo-workflows-values.yaml",{
-
-    acm_certificate_arn = aws_acm_certificate.own_acm.arn
-    public_subnets = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
-
-  })
-  ]
-
-
-  timeout = 120
-
-  depends_on = [kubernetes_namespace.argo-workflows]
-}
-
-resource "helm_release" "argo-events" {   #
-  name             = "argo-events"
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-events"
-  namespace        = "argo-events"
-  create_namespace = false
-  version          = "2.4.7"
-
-  values = [ templatefile("${path.module}/helm-values/argo-events-values.yaml",{
-
-  })
-  ]
-
-
-  timeout = 120
-
-  depends_on = [kubernetes_namespace.argo-events]
-}
 
 resource "null_resource" "wait_for_lb" {
   depends_on = [helm_release.argocd]

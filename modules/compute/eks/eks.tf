@@ -165,7 +165,7 @@ module "eks" {
 resource "kubernetes_config_map" "aws-auth" {
   data = {
     "mapRoles" = <<EOT
-- rolearn: arn:aws:iam::891377107274:role/KarpenterNodeRole-EKS-01
+- rolearn:
   username: system:node:{{EC2PrivateDNSName}}
   groups:
     - system:bootstrappers
@@ -178,3 +178,4 @@ EOT
     namespace = "kube-system"
   }
 }
+

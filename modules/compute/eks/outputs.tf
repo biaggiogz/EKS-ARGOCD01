@@ -97,6 +97,6 @@ output "eks_secrets_manager_role-arn" {
   value = aws_iam_role.eks_secrets_manager_role.arn
 }
 
-output "karpenter_role" {
-  value = aws_cloudformation_stack.karpenter.iam_role_arn
+output "policy_grafana_arn" {
+  value = aws_iam_policy.grafana.arn
 }

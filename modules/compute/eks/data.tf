@@ -53,3 +53,4 @@ data "terraform_remote_state" "global-variables" {
 
   }
 }
+

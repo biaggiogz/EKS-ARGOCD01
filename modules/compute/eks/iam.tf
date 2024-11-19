@@ -135,19 +135,101 @@ resource "aws_iam_role_policy_attachment" "secrets_manager_policy_attachment" {
   role       = aws_iam_role.eks_secrets_manager_role.name
 }
 
+resource "aws_iam_policy" "grafana" {
 
-
-data "http" "karpenter_cloudformation_template" {
-  url = "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v${local.karpenter_version}/website/content/en/preview/getting-started/getting-started-with-karpenter/cloudformation.yaml"
+  description = "IAM policy for Grafana Pod"
+  name_prefix = format("%s-%s-", local.name, "grafana")
+  path        = "/"
+  policy      = data.aws_iam_policy_document.grafana.json
 }
 
-resource "aws_cloudformation_stack" "karpenter" {
-  name = "Karpenter-${local.cluster_name}"
-  template_body = data.http.karpenter_cloudformation_template.body
-  capabilities = ["CAPABILITY_NAMED_IAM"]
 
-  parameters = {
-    ClusterName = local.cluster_name
+data "aws_iam_policy_document" "grafana" {
+
+  statement {
+    sid       = "AllowReadingMetricsFromCloudWatch"
+    effect    = "Allow"
+    resources = ["*"]
+
+    actions = [
+      "cloudwatch:DescribeAlarmsForMetric",
+      "cloudwatch:ListMetrics",
+      "cloudwatch:GetMetricData",
+      "cloudwatch:GetMetricStatistics"
+    ]
+  }
+
+  statement {
+    sid       = "AllowGetInsightsCloudWatch"
+    effect    = "Allow"
+    resources = ["arn:${local.partition}:cloudwatch:${local.region}:${local.account_id}:insight-rule/*"]
+
+    actions = [
+      "cloudwatch:GetInsightRuleReport",
+    ]
+  }
+
+  statement {
+    sid       = "AllowReadingAlarmHistoryFromCloudWatch"
+    effect    = "Allow"
+    resources = ["arn:${local.partition}:cloudwatch:${local.region}:${local.account_id}:alarm:*"]
+
+    actions = [
+      "cloudwatch:DescribeAlarmHistory",
+      "cloudwatch:DescribeAlarms",
+    ]
+  }
+
+  statement {
+    sid       = "AllowReadingLogsFromCloudWatch"
+    effect    = "Allow"
+    resources = ["arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:*:log-stream:*"]
+
+    actions = [
+      "logs:DescribeLogGroups",
+      "logs:GetLogGroupFields",
+      "logs:StartQuery",
+      "logs:StopQuery",
+      "logs:GetQueryResults",
+      "logs:GetLogEvents",
+    ]
+  }
+
+  statement {
+    sid       = "AllowReadingTagsInstancesRegionsFromEC2"
+    effect    = "Allow"
+    resources = ["*"]
+
+    actions = [
+      "ec2:DescribeTags",
+      "ec2:DescribeInstances",
+      "ec2:DescribeRegions",
+    ]
+  }
+
+  statement {
+    sid       = "AllowReadingResourcesForTags"
+    effect    = "Allow"
+    resources = ["*"]
+    actions   = ["tag:GetResources"]
+  }
+
+  statement {
+    sid    = "AllowListApsWorkspaces"
+    effect = "Allow"
+    resources = [
+      "arn:${local.partition}:aps:${local.region}:${local.account_id}:/*",
+      "arn:${local.partition}:aps:${local.region}:${local.account_id}:workspace/*",
+      "arn:${local.partition}:aps:${local.region}:${local.account_id}:workspace/*/*",
+    ]
+    actions = [
+      "aps:ListWorkspaces",
+      "aps:DescribeWorkspace",
+      "aps:GetMetricMetadata",
+      "aps:GetSeries",
+      "aps:QueryMetrics",
+      "aps:RemoteWrite",
+      "aps:GetLabels"
+    ]
   }
 }
-
