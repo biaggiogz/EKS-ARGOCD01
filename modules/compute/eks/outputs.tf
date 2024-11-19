@@ -100,3 +100,13 @@ output "eks_secrets_manager_role-arn" {
 output "policy_grafana_arn" {
   value = aws_iam_policy.grafana.arn
 }
+
+output "status_eks" {
+  value = module.eks.cluster_status == "ACTIVE" ? true : false
+
+}
+
+output "admin_password_version_grafana" {
+  value = aws_secretsmanager_secret_version.grafana.secret_string
+  sensitive = true
+}

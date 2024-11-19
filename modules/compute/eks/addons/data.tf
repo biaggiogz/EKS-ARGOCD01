@@ -11,6 +11,9 @@ data "aws_iam_policy" "aws_load_balancer_controller" {
   name = "AWSLoadBalancerControllerIAMPolicy"
 }
 
+data "aws_ecrpublic_authorization_token" "token" {
+  provider = aws.ecr
+}
 
 
 data "terraform_remote_state" "vpc" {
@@ -70,3 +73,10 @@ data "terraform_remote_state" "global-variables" {
 data "aws_eks_cluster_auth" "this" {
   name = local.cluster_name
 }
+/*
+data "aws_eks_addon" "karpenter" {
+  count = local.create_karpenter ? 1 : 0
+  cluster_name = local.cluster_name
+  addon_name   = "karpenter"
+
+}*/

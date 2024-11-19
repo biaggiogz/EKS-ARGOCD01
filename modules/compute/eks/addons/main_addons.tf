@@ -1,13 +1,29 @@
 
-module "eks_blueprints_addons" {
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "~> 1.18"
 
+
+module "eks_blueprints_addons" {
+
+  source  = "aws-ia/eks-blueprints-addons/aws"
+  version = "1.19.0"
   cluster_name      = local.cluster_name
   cluster_endpoint  = local.cluster_endpoint
   cluster_version   = local.cluster_version
   oidc_provider_arn = local.eks_oidc_provider_arn
 
+  enable_karpenter = true
+  karpenter_enable_spot_termination = true
+
+  karpenter = {
+    chart_version       = "0.37.6"
+    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
+    repository_password = data.aws_ecrpublic_authorization_token.token.password
+  }
+
+  karpenter_node =  {
+    iam_role_additional_policies = {
+      AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    }
+  }
 
   eks_addons = {
     aws-ebs-csi-driver = {
@@ -37,6 +53,11 @@ module "eks_blueprints_addons" {
 
   enable_aws_efs_csi_driver = true
 
+
+  enable_metrics_server = true
+  metrics_server = {
+    values = [templatefile("${path.module}/helm-values/metrics-server-values.yaml", {})]
+  }
 
   #enable_aws_load_balancer_controller = true
 
@@ -75,32 +96,72 @@ module "eks_blueprints_addons" {
       EOT
     ]
   }
+  enable_kube_prometheus_stack = true
+  kube_prometheus_stack = { ###REMEMBER UPDATE THIS CHART
+    values = [
+        local.enable_amazon_prometheus ? templatefile("${path.module}/helm-values/kube-prometheus-amp-enable.yaml", {
+        region              = local.region
+        amp_sa              = local.amp_ingest_service_account
+        amp_irsa            = module.amp_ingest_irsa[0].iam_role_arn
+        amp_remotewrite_url = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp[0].id}/api/v1/remote_write"
+        amp_url             = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp[0].id}"
+        storage_class_type  = kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class.id
+      }) : templatefile("${path.module}/helm-values/kube-prometheus.yaml", {})
+    ]
+    chart_version = "48.1.1"
+    set_sensitive = [
+      {
+        name  = "grafana.adminPassword"
+        value = local.admin_password_version_grafana
+      }
+    ],
+  }
 
   tags = local.labels
 
-  depends_on = [module.ebs_csi_driver_irsa, module.eks-blueprints-addons]
+  depends_on = [module.ebs_csi_driver_irsa , kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class]
 }
 
 
-module "eks-blueprints-addons" {
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.19.0"
-  cluster_name      = local.cluster_name
-  cluster_endpoint  = local.cluster_endpoint
-  cluster_version   = local.cluster_version
-  oidc_provider_arn = local.eks_oidc_provider_arn
 
-  enable_karpenter                  = true
-  karpenter_enable_spot_termination = true
-  karpenter_node = {
-    iam_role_additional_policies = {
-      AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+
+
+module "eks-data-addons" {
+    source  = "aws-ia/eks-data-addons/aws"
+    version = "1.35.0"
+    oidc_provider_arn = local.eks_oidc_provider_arn
+
+    # insert the 1 required variable here
+  }
+
+
+
+resource "aws_prometheus_workspace" "amp" {
+  count = local.enable_amazon_prometheus ? 1 : 0
+
+  alias = format("%s-%s", "amp-ws", local.name)
+  tags  = local.tags
+}
+
+module "amp_ingest_irsa" {
+  count = local.enable_amazon_prometheus ? 1 : 0
+
+
+  source         = "aws-ia/eks-blueprints-addon/aws"
+  version        = "1.1.1"
+  create_release = false
+  create_role    = true
+  create_policy  = false
+  role_name      = format("%s-%s", local.name, "amp-ingest")
+  role_policies  = { amp_policy = local.policy_grafana_arn }
+
+  oidc_providers = {
+    this = {
+      provider_arn    = local.eks_oidc_provider_arn
+      namespace       = local.amp_namespace
+      service_account = local.amp_ingest_service_account
     }
   }
-  karpenter = {
-    chart_version       = "0.37.6"
-    repository_username = data.aws_ecrpublic_authorization_token.token.user_name
-    repository_password = data.aws_ecrpublic_authorization_token.token.password
-  }
 
+  tags = local.tags
 }

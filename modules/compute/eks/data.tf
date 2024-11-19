@@ -13,7 +13,11 @@ data "aws_iam_policy" "aws_load_balancer_controller" {
   name = "AWSLoadBalancerControllerIAMPolicy"
 }
 
-
+data "aws_route53_zone" "selected" {
+  zone_id = local.r53_hosted_zone_id
+  name         = local.public_dns_name
+  private_zone = false
+}
 
 data "terraform_remote_state" "vpc" {
   backend = "s3"

@@ -8,7 +8,17 @@ locals {
   cluster_version = data.terraform_remote_state.eks.outputs.cluster_version
   eks_oidc_provider_arn = data.terraform_remote_state.eks.outputs.eks_oidc_provider_arn
   name = data.terraform_remote_state.global-variables.outputs.environment_name
+  enable_amazon_prometheus =data.terraform_remote_state.global-variables.outputs.enable_amazon_prometheus
   #argocd_credentials = jsondecode(data.aws_secretsmanager_secret_version.argocd_credentials.secret_string)
+  amp_ingest_service_account = "amp-iamproxy-ingest-service-account"
+  amp_namespace              = "kube-prometheus-stack"
+  policy_grafana_arn = data.terraform_remote_state.eks.outputs.policy_grafana_arn
+  status_eks = data.terraform_remote_state.eks.outputs.status_eks
+  #create_karpenter = data.terraform_remote_state.global-variables.outputs.create_karpenter
+  #enable_karpenter = local.create_karpenter && (length(data.aws_eks_addon.karpenter) == 0 || data.aws_eks_addon.karpenter[0].id == null)
+  region = data.aws_region.current.name
+  admin_password_version_grafana =data.terraform_remote_state.eks.outputs.admin_password_version_grafana
+
 
   labels = {
     environment                    = data.terraform_remote_state.global-variables.outputs.environment_name
@@ -26,6 +36,4 @@ locals {
 
 
 }
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.ecr
-}
+

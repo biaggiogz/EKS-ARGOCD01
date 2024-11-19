@@ -19,15 +19,6 @@ resource "aws_secretsmanager_secret_version" "argocd_credentials" {
 }
 */
 
-resource "kubernetes_namespace" "argocd" {
-
-  metadata {
-    labels = local.labels
-    name   = "argocd"
-  }
-
-}
-
 
 resource "kubernetes_service_account" "argocd_secrets_sa" {
   metadata {
@@ -63,7 +54,44 @@ resource "helm_release" "argocd" {   ###############This resource is who create 
 
 
 
+resource "helm_release" "argo-workflows" {   #
+  name             = "argo-workflows"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-workflows"
+  namespace        = "argo-workflows"
+  create_namespace = false
+  version          = "0.42.6"
 
+  values = [ templatefile("${path.module}/helm-values/argo-workflows-values.yaml",{
+
+    acm_certificate_arn = aws_acm_certificate.own_acm.arn
+    public_subnets = join(",", data.terraform_remote_state.vpc.outputs.public_subnets)
+
+  })
+  ]
+
+
+  timeout = 120
+
+}
+
+resource "helm_release" "argo-events" {   #
+  name             = "argo-events"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-events"
+  namespace        = "argo-events"
+  create_namespace = false
+  version          = "2.4.7"
+
+  values = [ templatefile("${path.module}/helm-values/argo-events-values.yaml",{
+
+  })
+  ]
+
+
+  timeout = 120
+
+}
 
 resource "null_resource" "wait_for_lb" {
   depends_on = [helm_release.argocd]
@@ -97,6 +125,13 @@ data "aws_lb" "argocd" {
   depends_on = [helm_release.argocd, data.kubernetes_service.argocd_server]
 
 }
+data "aws_lb" "argo-workflows" {
+  tags = {
+    "kubernetes.io/cluster/EKS-01" = "owned"
+    "kubernetes.io/service-name" =   "argo-workflows/argo-workflows-server"
+  }
+
+}
 
 resource "aws_route53_record" "argocd" {
   zone_id = data.aws_route53_zone.selected.zone_id
@@ -106,6 +141,17 @@ resource "aws_route53_record" "argocd" {
   alias {
     name                   = data.aws_lb.argocd.dns_name
     zone_id                = data.aws_lb.argocd.zone_id
+    evaluate_target_health = true
+  }
+}
+resource "aws_route53_record" "argo-worflows" {
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = "argo-workflows.dev.${local.public_dns_name}"
+  type    = "A"
+
+  alias {
+    name                   = data.aws_lb.argo-workflows.dns_name
+    zone_id                = data.aws_lb.argo-workflows.zone_id
     evaluate_target_health = true
   }
 }
@@ -123,6 +169,20 @@ resource "aws_route53_health_check" "argocd" {
     Name = "argocd-health-check"
   }
   depends_on = [aws_route53_record.argocd]
+}
+
+resource "aws_route53_health_check" "argo-worfklows" {
+  fqdn              = "dev.${local.public_dns_name}"
+  port              = 2746
+  type              = "HTTPS"
+  resource_path     = "/"
+  failure_threshold = "5"
+  request_interval  = "30"
+
+  tags = {
+    Name = "argo-worflows-health-check"
+  }
+  depends_on = [aws_route53_record.argo-worflows]
 }
 
 resource "aws_acm_certificate" "own_acm" {

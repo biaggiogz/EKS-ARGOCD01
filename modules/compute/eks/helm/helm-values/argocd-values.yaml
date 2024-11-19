@@ -12,5 +12,6 @@ server:
       external-dns.alpha.kubernetes.io/hostname: argocd.dev.infinitydataservices.com
       service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
       service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+      #service.beta.kubernetes.io/aws-load-balancer-name: "LoadBalancer-ArgoCD"
   extraArgs:
     - "--insecure"

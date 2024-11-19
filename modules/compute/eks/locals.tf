@@ -6,6 +6,8 @@ locals {
   cluster_name = data.terraform_remote_state.global-variables.outputs.cluster_name
   partition  = data.aws_partition.current.partition
   account_id = data.aws_caller_identity.current.account_id
+  public_dns_name =data.terraform_remote_state.global-variables.outputs.public_dns_name
+  r53_hosted_zone_id =data.terraform_remote_state.global-variables.outputs.r53_hosted_zone_id
 
   labels = {
     environment                    = data.terraform_remote_state.global-variables.outputs.environment_name
