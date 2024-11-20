@@ -10,13 +10,13 @@ prometheus:
         sigv4:
           region: ${region}
         queueConfig:
-          maxSamplesPerSend: 1000
+          maxSamplesPerSend: 500
           maxShards: 200
           capacity: 2500
-    retention: 5h
-    scrapeInterval: 30s
-    evaluationInterval: 30s
-    scrapeTimeout: 10s
+    retention: 4h
+    scrapeInterval: 600s
+    evaluationInterval: 600s
+    scrapeTimeout: 50s
     storageSpec:
       volumeClaimTemplate:
         metadata:
@@ -28,19 +28,19 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-    # Scrape metrics for Yunikorn add-on
     additionalScrapeConfigs:
-      - job_name: yunikorn
+      - job_name: kubecost
         honor_labels: true
-        scrape_interval: 1m
-        scrape_timeout: 10s
-        metrics_path: /ws/v1//metrics
+        scrape_interval: 10m
+        scrape_timeout: 30s
+        metrics_path: /metrics
         scheme: http
         dns_sd_configs:
           - names:
-              - yunikorn-service.yunikorn.svc
+              - kubecost-cost-analyzer.kubecost
             type: 'A'
-            port: 9080
+            port: 9003
+
 alertmanager:
   enabled: false
 

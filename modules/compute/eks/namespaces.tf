@@ -30,6 +30,12 @@ resource "kubernetes_namespace" "argo-workflows" {
   }
 }
 
+resource "kubernetes_namespace" "kubecost" {
 
+  metadata {
+    labels = local.labels
+    name = "kubecost"
+  }
+}
 
 

@@ -108,7 +108,7 @@ module "eks_blueprints_addons" {
         storage_class_type  = kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class.id
       }) : templatefile("${path.module}/helm-values/kube-prometheus.yaml", {})
     ]
-    chart_version = "48.1.1"
+    chart_version = "66.2.0"
     set_sensitive = [
       {
         name  = "grafana.adminPassword"
@@ -145,15 +145,14 @@ resource "aws_prometheus_workspace" "amp" {
 
 module "amp_ingest_irsa" {
   count = local.enable_amazon_prometheus ? 1 : 0
-
-
   source         = "aws-ia/eks-blueprints-addon/aws"
   version        = "1.1.1"
   create_release = false
   create_role    = true
   create_policy  = false
   role_name      = format("%s-%s", local.name, "amp-ingest")
-  role_policies  = { amp_policy = local.policy_grafana_arn }
+  role_policies  = { amp_policy = local.policy_grafana_arn , prometheusquery = "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess",
+                    prometheuswrite = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"}
 
   oidc_providers = {
     this = {
@@ -164,4 +163,29 @@ module "amp_ingest_irsa" {
   }
 
   tags = local.tags
+}
+
+
+resource "helm_release" "kubecost" {
+  name             = "kubecost"
+  repository       = "oci://public.ecr.aws/kubecost"
+  chart            = "cost-analyzer"
+  version          = "2.4.2"
+  namespace        = "kubecost"
+  create_namespace = false
+
+  values = [
+    templatefile("${path.module}/helm-values/kubecost-values.yaml",{
+
+      AMP_WORKSPACE_ID = aws_prometheus_workspace.amp[0].id
+      AWS_REGION = local.region
+      CLUSTER_NAME = local.cluster_name
+
+
+    }),
+    templatefile("${path.module}/helm-values/kubecost-images-values.yaml",{})
+  ]
+
+  depends_on = [module.eks_blueprints_addons]
+
 }

@@ -233,3 +233,95 @@ data "aws_iam_policy_document" "grafana" {
     ]
   }
 }
+
+
+resource "aws_iam_policy" "kubecost_policy" {
+  name        = "KubecostPolicy"
+  path        = "/"
+  description = "IAM policy for Kubecost"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "athena:*",
+          "glue:*",
+          "s3:*",
+          "s3-object-lambda:*",
+          "cloudwatch:GetMetricData",
+          "compute-optimizer:GetEnrollmentStatus",
+          "compute-optimizer:GetRecommendationSummaries",
+          "ec2:DescribeAddresses",
+          "ec2:DescribeInstances",
+          "ec2:DescribeRegions",
+          "ec2:DescribeReservedInstances",
+          "ec2:DescribeReservedInstancesModifications",
+          "ec2:DescribeReservedInstancesOfferings",
+          "ec2:DescribeTags",
+          "ecs:DescribeClusters",
+          "ecs:DescribeContainerInstances",
+          "ecs:ListClusters",
+          "ecs:ListContainerInstances",
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "organizations:DescribeOrganization",
+          "ce:GetCostAndUsage",
+          "ce:GetTags",
+          "pricing:GetProducts",
+          "savingsplans:DescribeSavingsPlans"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "kubecost_role" {
+  name = "KubecostRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}"
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub": "system:serviceaccount:kubecost:kubecost-cost-analyzer"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "kubecost_policy_attachment" {
+  policy_arn = aws_iam_policy.kubecost_policy.arn
+  role       = aws_iam_role.kubecost_role.name
+}
+resource "aws_iam_role_policy_attachment" "prometheus_query_access" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess"
+  role       = aws_iam_role.kubecost_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "prometheus_remote_write_access" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusRemoteWriteAccess"
+  role       = aws_iam_role.kubecost_role.name
+}
+
+resource "kubernetes_service_account" "kubecost" {
+  metadata {
+    name      = "kubecost-cost-analyzer"
+    namespace = "kubecost"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.kubecost_role.arn
+    }
+  }
+  depends_on = [kubernetes_namespace.kubecost]
+}
+

@@ -1,0 +1,42 @@
+global:
+  global:
+    prometheus:
+      enabled: false  # Kubecost depends on Prometheus data, it is not optional. When enabled: false, Prometheus will not be installed and you must configure your own Prometheus to scrape kubecost as well as provide the fqdn below. -- Warning: Before changing this setting, please read to understand the risks https://docs.kubecost.com/install-and-configure/install/custom-prom
+      fqdn: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc:9090  # example address of a prometheus to connect to. Include protocol (http:// or https://) Ignored if enabled: true
+      # insecureSkipVerify: false  # If true, kubecost will not check the TLS cert of prometheus
+      # queryServiceBasicAuthSecretName: dbsecret # kubectl create secret generic dbsecret -n kubecost --from-file=USERNAME --from-file=PASSWORD
+      # queryServiceBearerTokenSecretName: mcdbsecret  # kubectl create secret generic mcdbsecret -n kubecost --from-file=TOKEN
+      # kubeRBACProxy: false # If true, kubecost will use kube-rbac-proxy to authenticate with in cluster Prometheus for openshift
+
+  amp:
+    enabled: false
+    prometheusServerEndpoint: https://aps-workspaces.eu-north-1.amazonaws.com/workspaces/ws-9ab2817d-773b-4186-ad16-3fad7c06b844/api/v1/query
+    remoteWriteService: https://aps-workspaces.${AWS_REGION}.amazonaws.com/workspaces/${AMP_WORKSPACE_ID}/api/v1/remote_write
+    sigv4:
+      region: ${AWS_REGION}
+
+sigV4Proxy:
+  region: ${AWS_REGION}
+  host: aps-workspaces.${AWS_REGION}.amazonaws.com
+
+kubecostProductConfigs:
+  clusterName: ${CLUSTER_NAME}
+
+prometheus:
+  server:
+    global:
+      external_labels:
+        cluster_id: ${CLUSTER_NAME}
+  nodeExporter:
+    enabled: false
+  kube-state-metrics:
+    disabled: true
+
+  serviceAccounts:
+    nodeExporter:
+      create: false
+
+
+serviceAccount:
+  create: false
+#  name: kubecost-cost-analyzer
