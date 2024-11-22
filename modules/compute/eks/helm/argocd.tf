@@ -236,11 +236,13 @@ resource "null_resource" "wait_for_cert_validation" {
   }
 }
 
+
+
 resource "null_resource" "argocd_admin_token" {
   depends_on = [helm_release.argocd]
 
   triggers = {
-    argocd_server_password = helm_release.argocd.metadata[0].name
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {
@@ -248,17 +250,28 @@ resource "null_resource" "argocd_admin_token" {
       kubectl patch configmap/argocd-cm --type merge -p '{"data":{"accounts.admin":"apiKey"}}' -n argocd
       kubectl scale deployment argocd-server --replicas=0 -n argocd
       kubectl scale deployment argocd-server --replicas=1 -n argocd
-      kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d > /tmp/argocd_admin_password
-      argocd login --username admin --password $(cat /tmp/argocd_admin_password) --insecure $(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-      argocd account generate-token --account admin > /tmp/argocd_admin_token
-      rm /tmp/argocd_admin_password
+
+      # Wait for Argo CD server to be ready
+      kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+
+      # Get the initial admin password
+      ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+
+      # Get the Argo CD server URL
+      ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+      # Login to Argo CD
+      argocd login --username admin --password $ARGOCD_PASSWORD --insecure $ARGOCD_SERVER
+
+      # Generate and save the token
+      argocd account generate-token --account admin > ~/Documents/argocdtmp/argocd_admin_token
     EOT
   }
 }
 
-data "local_file" "argocd_admin_token" {
+locals {
+  argocd_admin_token = sensitive(trimspace(file(pathexpand("~/Documents/argocdtmp/argocd_admin_token"))))
   depends_on = [null_resource.argocd_admin_token]
-  filename   = "/tmp/argocd_admin_token"
 }
 resource "aws_kms_key" "secrets_key" {
   description = "KMS key for Secrets Manager"
@@ -274,14 +287,14 @@ resource "aws_secretsmanager_secret" "argocd_token" {
 }
 resource "aws_secretsmanager_secret_version" "argocd_token" {
   secret_id     = aws_secretsmanager_secret.argocd_token.id
-  secret_string = trimspace(data.local_file.argocd_admin_token.content)
+  secret_string = trimspace(local.argocd_admin_token)
 }
 
 resource "null_resource" "cleanup_token_file" {
   depends_on = [aws_secretsmanager_secret_version.argocd_token]
 
   provisioner "local-exec" {
-    command = "rm /tmp/argocd_admin_token"
+    command = "rm ~/Documents/argocdtmp/argocd_admin_token"
   }
 }
 

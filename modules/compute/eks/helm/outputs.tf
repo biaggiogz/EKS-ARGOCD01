@@ -1,5 +1,5 @@
 output "argocd_url" {
-  value     = data.external.url_argocd.result
+  value     = aws_route53_record.argocd.name
   sensitive = true
 }
 
