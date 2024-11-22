@@ -80,3 +80,20 @@ data "aws_eks_addon" "karpenter" {
   addon_name   = "karpenter"
 
 }*/
+
+
+
+
+data "external" "get_pod_status" {
+  program = [
+    "bash",
+    "-c",
+    <<EOT
+    POD_NAME=$(kubectl get pod -n ${local.namespace_spark_operator} -l ${local.label_spark_operator} -o jsonpath='{.items[0].metadata.name}')
+    STATUS=$(kubectl get pod $POD_NAME -n ${local.namespace_spark_operator} -o jsonpath='{.status.phase}')
+    echo "{\"status\": \"$STATUS\"}"
+    EOT
+  ]
+}
+
+

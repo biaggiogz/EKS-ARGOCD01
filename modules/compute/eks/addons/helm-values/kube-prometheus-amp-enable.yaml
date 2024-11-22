@@ -41,6 +41,10 @@ prometheus:
             type: 'A'
             port: 9003
 
+            ################
+  serviceMonitor:
+    enabled: true
+#####################################
 alertmanager:
   enabled: false
 
@@ -63,3 +67,9 @@ grafana:
       type: prometheus
       isDefault: false
       url: ${amp_url}
+
+      #####################
+prometheusRule:
+  enabled: true
+
+  #########################

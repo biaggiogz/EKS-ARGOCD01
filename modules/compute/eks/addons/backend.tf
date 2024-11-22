@@ -25,6 +25,10 @@ terraform {
       source = "hashicorp/null"
       version = "3.2.3"
     }
+    external = {
+      source = "hashicorp/external"
+      version = "2.3.4"
+    }
   }
   backend "s3" {
     bucket         = "terraform-state-production-01"

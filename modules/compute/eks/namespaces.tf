@@ -38,4 +38,13 @@ resource "kubernetes_namespace" "kubecost" {
   }
 }
 
+resource "kubernetes_namespace" "spark_team" {
+  metadata {
+    name = local.spark_team
+  }
+  timeouts {
+    delete = "15m"
+  }
+}
+
 

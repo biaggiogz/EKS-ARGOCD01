@@ -109,13 +109,13 @@ module "eks" {
 
   eks_managed_node_groups = {
     core_node_group = {
-      name       = "core-node-group-${local.cluster_name}"
+      name       = "CoreNode-group-${local.cluster_name}"
       description = "EKS Core node group for hosting critical add-ons"
       subnet_ids = compact([for subnet_id, cidr_block in zipmap(local.private_subnets, local.private_subnets_cidr_blocks) : substr(cidr_block, 0, 4) == "100." ? subnet_id : null])
 
-      min_size      = 2
-      max_size      = 4
-      desired_size  = 3
+      min_size      = 1
+      max_size      = 3
+      desired_size  = 2
       ami_type      = "AL2_x86_64"
       capacity_type = "SPOT"
 
@@ -127,7 +127,7 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size = 150
+            volume_size = 100
             volume_type = "gp3"
           }
         }
@@ -140,10 +140,11 @@ module "eks" {
       }
 
       tags = merge(local.tags, {
-        Name                     = "core-node-grp",
+        Name                     = "core-node-grp-light",
         "karpenter.sh/discovery" = local.name
       })
     }
+
   }
 
 
@@ -158,6 +159,7 @@ module "eks" {
     aws_iam_role_policy_attachment.eks_loadbalancer_policy
 
   ]
+
 }
 
 

@@ -131,8 +131,13 @@ module "eks-data-addons" {
     version = "1.35.0"
     oidc_provider_arn = local.eks_oidc_provider_arn
 
-    # insert the 1 required variable here
+  enable_spark_operator = local.spark_team_namespace_created ? true : false
+  spark_operator_helm_config = {
+    values = [templatefile("${path.module}/helm-values/spark-operator-values.yaml", {})]
   }
+
+  depends_on = [module.eks_blueprints_addons]
+}
 
 
 
@@ -188,4 +193,17 @@ resource "helm_release" "kubecost" {
 
   depends_on = [module.eks_blueprints_addons]
 
+}
+
+resource "null_resource" "wait_for_spark_operator" {
+  depends_on = [module.eks-data-addons]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      kubectl wait --namespace spark-operator \
+        --for=condition=ready pod \
+        --selector=app.kubernetes.io/name=spark-operator \
+        --timeout=90s
+    EOT
+  }
 }

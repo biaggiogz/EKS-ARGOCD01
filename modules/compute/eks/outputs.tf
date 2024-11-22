@@ -110,3 +110,12 @@ output "admin_password_version_grafana" {
   value = aws_secretsmanager_secret_version.grafana.secret_string
   sensitive = true
 }
+
+output "spark_team_namespace_created" {
+  value = kubernetes_namespace.spark_team.id != "" ? true : false
+}
+
+output "spark_team_irsa_created" {
+  value = module.spark_team_irsa.iam_role_unique_id != "" ? true : false
+}
+

@@ -8,6 +8,10 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   public_dns_name =data.terraform_remote_state.global-variables.outputs.public_dns_name
   r53_hosted_zone_id =data.terraform_remote_state.global-variables.outputs.r53_hosted_zone_id
+  spark_team = data.terraform_remote_state.global-variables.outputs.spark_team
+  event_namespace       = "argo-events"
+  event_service_account = "event-sa"
+  pod_status_spark_operator = data.terraform_remote_state.eks_addons.outputs.pod_status_spark_operator
 
   labels = {
     environment                    = data.terraform_remote_state.global-variables.outputs.environment_name

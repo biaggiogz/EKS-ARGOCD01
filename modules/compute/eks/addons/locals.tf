@@ -18,6 +18,10 @@ locals {
   #enable_karpenter = local.create_karpenter && (length(data.aws_eks_addon.karpenter) == 0 || data.aws_eks_addon.karpenter[0].id == null)
   region = data.aws_region.current.name
   admin_password_version_grafana =data.terraform_remote_state.eks.outputs.admin_password_version_grafana
+  spark_team_namespace_created = data.terraform_remote_state.eks.outputs.spark_team_namespace_created
+  namespace_spark_operator = "spark-operator"
+  label_spark_operator ="app.kubernetes.io/name=spark-operator"
+
 
 
   labels = {
