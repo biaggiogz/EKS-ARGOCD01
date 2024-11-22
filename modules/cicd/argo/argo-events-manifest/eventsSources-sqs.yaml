@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: aws-sqs
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: event-sa
+  sqs:
+    sqs-spark-workflow:
+
+      jsonBody: true
+      region: "eu-north1-"
+      queue: "karpenter-EKS-01"
+      # The duration (in seconds) for which the call waits for a message to arrive in the queue before returning.
+      # MUST BE > 0 AND <= 20
+      waitTimeSeconds: 20

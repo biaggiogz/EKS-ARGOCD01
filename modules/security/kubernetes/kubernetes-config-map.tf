@@ -13,9 +13,9 @@ locals {
   existing_map_roles = yamldecode(data.kubernetes_config_map.aws_auth.data.mapRoles)
   new_map_roles = [
     {
-      rolearn = ""
+      rolearn  = local.karpenter_role_arn
       username = "system:node:{{EC2PrivateDNSName}}"
-      groups =["system:bootstrappers","system:nodes"]
+      groups   = ["system:bootstrappers", "system:nodes"]
     },
     {
       rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/k8sDev"
@@ -33,7 +33,13 @@ locals {
       groups   = ["system:masters"]
     }
   ]
-  combined_map_roles = concat(local.existing_map_roles, local.new_map_roles)
+
+  combined_map_roles = distinct(concat(local.existing_map_roles, local.new_map_roles))
+
+  unique_map_roles = [
+    for i, role in local.combined_map_roles :
+    role if index(local.combined_map_roles, role) == i
+  ]
 }
 
 resource "kubernetes_config_map_v1_data" "aws_auth" {
