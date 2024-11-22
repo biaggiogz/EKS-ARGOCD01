@@ -73,15 +73,3 @@ data "aws_route53_zone" "selected" {
 }
 
 
-
-data "external" "url_argocd" {
-  program = [
-  "bash", "-c",
-    <<EOT
-    URL_ARGOCD=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-    echo "{\"url_argocd\": \"$URL_ARGOCD\"}"
-    EOT
-  ]
-}
-
-

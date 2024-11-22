@@ -236,3 +236,52 @@ resource "null_resource" "wait_for_cert_validation" {
   }
 }
 
+resource "null_resource" "argocd_admin_token" {
+  depends_on = [helm_release.argocd]
+
+  triggers = {
+    argocd_server_password = helm_release.argocd.metadata[0].name
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl patch configmap/argocd-cm --type merge -p '{"data":{"accounts.admin":"apiKey"}}' -n argocd
+      kubectl scale deployment argocd-server --replicas=0 -n argocd
+      kubectl scale deployment argocd-server --replicas=1 -n argocd
+      kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d > /tmp/argocd_admin_password
+      argocd login --username admin --password $(cat /tmp/argocd_admin_password) --insecure $(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+      argocd account generate-token --account admin > /tmp/argocd_admin_token
+      rm /tmp/argocd_admin_password
+    EOT
+  }
+}
+
+data "local_file" "argocd_admin_token" {
+  depends_on = [null_resource.argocd_admin_token]
+  filename   = "/tmp/argocd_admin_token"
+}
+resource "aws_kms_key" "secrets_key" {
+  description = "KMS key for Secrets Manager"
+  enable_key_rotation = true
+  tags                = local.labels
+}
+
+resource "aws_secretsmanager_secret" "argocd_token" {
+  name = "argocd-token-account-admin-${local.cluster_name}"
+  kms_key_id = aws_kms_key.secrets_key.arn
+  tags       = local.labels
+
+}
+resource "aws_secretsmanager_secret_version" "argocd_token" {
+  secret_id     = aws_secretsmanager_secret.argocd_token.id
+  secret_string = trimspace(data.local_file.argocd_admin_token.content)
+}
+
+resource "null_resource" "cleanup_token_file" {
+  depends_on = [aws_secretsmanager_secret_version.argocd_token]
+
+  provisioner "local-exec" {
+    command = "rm /tmp/argocd_admin_token"
+  }
+}
+
