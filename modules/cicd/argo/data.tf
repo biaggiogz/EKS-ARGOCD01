@@ -66,10 +66,17 @@ data "terraform_remote_state" "global-variables" {
   }
 }
 
-data "aws_route53_zone" "selected" {
-  zone_id = local.r53_hosted_zone_id
-  name         = local.public_dns_name
-  private_zone = false
+data "terraform_remote_state" "helm_argocd" {
+  backend = "s3"
+
+  config = {
+    bucket         = "terraform-state-production-01"
+    key            = "modules/compute/eks/helm/terraform.tfstate"
+    region        = "eu-north-1"
+    encrypt    = true
+    kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
+
+  }
 }
 
 
