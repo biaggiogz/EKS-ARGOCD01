@@ -136,6 +136,7 @@ module "eks-data-addons" {
     values = [templatefile("${path.module}/helm-values/spark-operator-values.yaml", {})]
   }
 
+
   depends_on = [module.eks_blueprints_addons]
 }
 

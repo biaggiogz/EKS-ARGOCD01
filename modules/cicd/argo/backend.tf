@@ -76,3 +76,13 @@ provider "argocd" {
 
 
 }
+
+provider "aws" {
+  region = "eu-north-1"
+
+}
+
+provider "aws" {
+  alias  = "ecr"
+  region = "us-east-1"
+}
