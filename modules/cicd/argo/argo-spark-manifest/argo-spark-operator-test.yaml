@@ -1,0 +1,60 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: pyspark-pi-karpenter-compute
+  namespace: spark-team-01
+spec:
+  type: Python
+  mode: cluster
+  image: "apache/spark-py:v3.3.0"
+  imagePullPolicy: Always
+  mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
+  sparkVersion: "3.3.0"
+  restartPolicy:
+    type: OnFailure
+    onFailureRetries: 3
+    onFailureRetryInterval: 10
+    onSubmissionFailureRetries: 5
+    onSubmissionFailureRetryInterval: 20
+  driver:
+    cores: 1
+    coreLimit: "1200m"
+    memory: "512m"
+    labels:
+      version: 3.3.0
+    serviceAccount: spark-team-01
+    nodeSelector:
+      NodeGroupType: SparkComputeOptimized
+  executor:
+    cores: 1
+    instances: 2
+    memory: "512m"
+    labels:
+      version: 3.3.0
+    nodeSelector:
+      NodeGroupType: SparkComputeOptimized
+
+  dynamicAllocation:
+    enabled: true
+    initialExecutors: 2
+    minExecutors: 2
+    maxExecutors: 10
+  deps:
+    jars:
+      - "local:///opt/spark/examples/jars/spark-examples_2.12-3.3.0.jar"
+  hadoopConf:
+    "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.WebIdentityTokenCredentialsProvider"
+  sparkConf:
+    "spark.kubernetes.allocation.batch.size": "5"
+    "spark.kubernetes.driver.annotation.karpenter.sh/provisioner-name": "spark-compute-optimized"
+    "spark.kubernetes.executor.annotation.karpenter.sh/provisioner-name": "spark-compute-optimized"
+    "spark.dynamicAllocation.shuffleTracking.enabled": "true"
+    "spark.dynamicAllocation.executorAllocationRatio": "0.8"
+    "spark.dynamicAllocation.schedulerBacklogTimeout": "30s"
+    "spark.dynamicAllocation.sustainedSchedulerBacklogTimeout": "1min"
+  monitoring:
+    exposeDriverMetrics: true
+    exposeExecutorMetrics: true
+    prometheus:
+      jmxExporterJar: "/prometheus/jmx_prometheus_javaagent-0.17.2.jar"
+      port: 8090

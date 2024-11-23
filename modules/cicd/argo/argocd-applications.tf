@@ -28,6 +28,36 @@ resource "kubernetes_manifest" "argocd_application_events" {
   }
 }
 
+resource "kubernetes_manifest" "argocd_application_for_argo_workflows" {
+  manifest = {
+    apiVersion = "argoproj.io/v1alpha1"
+    kind       = "Application"
+    metadata = {
+      name      = "spark-workflow"
+      namespace = "argocd"
+    }
+    spec = {
+      project = "default"
+      source = {
+        repoURL        = "git@github.com:biaggiogz/EKS-ARGOCD01.git"
+        targetRevision = "production-01"
+        path           = "modules/cicd/argo/argo-spark-manifest"
+      }
+      destination = {
+        server    = "https://kubernetes.default.svc"
+        namespace = "spark-team-01"
+      }
+      syncPolicy = {
+        automated = {
+          prune    = true
+          selfHeal = true
+        }
+        syncOptions = ["CreateNamespace=true"]
+      }
+    }
+  }
+}
+
 
 resource "kubernetes_manifest" "argocd_karpenter_application" {
   manifest = {
