@@ -5,7 +5,7 @@ metadata:
   namespace: argo-workflows
 spec:
   arguments: {}
-  entrypoint: sparkapp-operator-test
+  entrypoint: sparkapp-operator
   nodeSelector:
     NodeGroupType: SparkComputeOptimized  #NodeGroupType: SparkComputeOptimized  from NodePool
     karpenter.sh/capacity-type: "spot"
@@ -14,7 +14,7 @@ spec:
       operator: "Exists"
       effect: "NoSchedule"
   templates:
-    - name: sparkapp-operator-test
+    - name: sparkapp-operator
       resource:
         action: create
         manifest: |
