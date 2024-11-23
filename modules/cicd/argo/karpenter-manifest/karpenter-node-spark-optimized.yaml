@@ -5,6 +5,9 @@ metadata:
   name: spark-compute-optimized
 spec:
   template:
+    metadata:
+      labels:
+        NodeGroupType: SparkComputeOptimized
     spec:
       nodeClassRef:
         group: karpenter.k8s.aws
@@ -35,7 +38,7 @@ spec:
   limits:
     cpu: 1000
   disruption:
-    consolidationPolicy: WhenEmpty
+    consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
     expireAfter: 48h
   weight: 100
