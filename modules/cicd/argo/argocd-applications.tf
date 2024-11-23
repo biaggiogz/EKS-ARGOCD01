@@ -42,7 +42,7 @@ resource "kubernetes_manifest" "argocd_karpenter_application" {
       source = {
         repoURL        = "public.ecr.aws/karpenter"
         chart          = "karpenter"
-        targetRevision = "0.37.6"
+        targetRevision = "1.0.8"
         helm = {
           releaseName = "karpenter"
           parameters = [
@@ -57,14 +57,6 @@ resource "kubernetes_manifest" "argocd_karpenter_application" {
             {
               name  = "settings.aws.clusterEndpoint"
               value = local.cluster_endpoint
-            },
-            {
-              name  = "settings.aws.defaultInstanceProfile"
-              value = local.karpenter_node_instance_profile_name
-            },
-            {
-              name  = "settings.aws.interruptionQueueName"
-              value = local.karpenter_sqs_name
             }
           ]
         }
@@ -98,17 +90,8 @@ resource "kubernetes_manifest" "argocd_application_karpenter" {
         repoURL        = "git@github.com:biaggiogz/EKS-ARGOCD01.git"
         targetRevision = "production-01"
         path           = "modules/cicd/argo/karpenter-manifest"
-        helm = {
-          parameters = [
-            {
-              name  = "karpenter_role_arn"
-              value = local.karpenter_role_arn
-            },
-            {
-              name  = "cluster_name"
-              value = local.cluster_name
-            }
-          ]
+        directory = {
+          recurse = true
         }
       }
       destination = {

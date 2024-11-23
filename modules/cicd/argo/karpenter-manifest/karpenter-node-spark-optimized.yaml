@@ -43,15 +43,19 @@ kind: EC2NodeClass
 metadata:
   name: spark-compute-optimized-ec2
 spec:
-  role: ${karpenter_role_arn}
+  role: "KarpenterNodeRole-EKS-01"
   subnetSelectorTerms:
     - tags:
-        Name: "${cluster_name}-private*"
+        Name: "EKS-01-private*"
+        karpenter.sh/discovery: "EKS-01"
   securityGroupSelectorTerms:
     - tags:
-        Name: ${cluster_name}-node
+        Name: "EKS-01-node"
+        karpenter.sh/discovery: "EKS-01"
+
   instanceStorePolicy: RAID0
   tags:
+    karpenter.sh/discovery: "EKS-01"
     type: karpenter
     NodeGroupType: SparkComputeOptimized
     multiArch: Spark
