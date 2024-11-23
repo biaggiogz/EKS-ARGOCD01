@@ -7,7 +7,8 @@ spec:
   template:
     metadata:
       labels:
-        NodeGroupType: SparkComputeOptimized
+        nodeGroupType: SparkComputeOptimized
+        kubernetes.io/karpenter : SparkComputeOptimized
     spec:
       nodeClassRef:
         group: karpenter.k8s.aws

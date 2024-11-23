@@ -10,6 +10,8 @@ spec:
   imagePullPolicy: Always
   mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
   sparkVersion: "3.3.0"
+  nodeSelector:
+    nodeGroupType: SparkComputeOptimized
   restartPolicy:
     type: OnFailure
     onFailureRetries: 3
@@ -23,17 +25,14 @@ spec:
     labels:
       version: 3.3.0
     serviceAccount: spark-team-01
-    nodeSelector:
-      NodeGroupType: SparkComputeOptimized
+    securityContext:
+      fsGroup: 65534
   executor:
     cores: 1
     instances: 2
     memory: "512m"
     labels:
       version: 3.3.0
-    nodeSelector:
-      NodeGroupType: SparkComputeOptimized
-
   dynamicAllocation:
     enabled: true
     initialExecutors: 2
