@@ -7,6 +7,8 @@ spec:
   template:
     spec:
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: spark-compute-optimized-ec2
       requirements:
         - key: "karpenter.sh/capacity-type"
@@ -43,6 +45,9 @@ kind: EC2NodeClass
 metadata:
   name: spark-compute-optimized-ec2
 spec:
+  amiSelectorTerms:
+    - tags:
+        karpenter.k8s.aws/amiFamily: AL2
   role: "KarpenterNodeRole-EKS-01"
   subnetSelectorTerms:
     - tags:
@@ -52,7 +57,6 @@ spec:
     - tags:
         Name: "EKS-01-node"
         karpenter.sh/discovery: "EKS-01"
-
   instanceStorePolicy: RAID0
   tags:
     karpenter.sh/discovery: "EKS-01"

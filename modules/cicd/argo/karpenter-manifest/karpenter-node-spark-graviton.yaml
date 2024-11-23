@@ -8,6 +8,8 @@ spec:
   template:
     spec:
       nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
         name: spark-graviton-compute-optimized-ec2
       requirements:
         - key: "karpenter.sh/capacity-type"
@@ -44,6 +46,9 @@ kind: EC2NodeClass
 metadata:
   name: spark-graviton-compute-optimized-ec2
 spec:
+  amiSelectorTerms:
+    - tags:
+        karpenter.k8s.aws/amiFamily: AL2
   role: "KarpenterNodeRole-EKS-01"
   subnetSelectorTerms:
     - tags:
