@@ -11,7 +11,7 @@ spec:
   mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
   sparkVersion: "3.3.0"
   nodeSelector:
-    nodeGroupType: SparkComputeOptimized
+    type: sparkTeam01
   restartPolicy:
     type: OnFailure
     onFailureRetries: 3
@@ -45,8 +45,8 @@ spec:
     "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.WebIdentityTokenCredentialsProvider"
   sparkConf:
     "spark.kubernetes.allocation.batch.size": "5"
-    "spark.kubernetes.driver.annotation.karpenter.sh/provisioner-name": "spark-compute-optimized"
-    "spark.kubernetes.executor.annotation.karpenter.sh/provisioner-name": "spark-compute-optimized"
+    "spark.kubernetes.driver.annotation.karpenter.sh/capacity-type:": "spot"
+    "spark.kubernetes.executor.annotation.karpenter.sh/capacity-type:": "spot"
     "spark.dynamicAllocation.shuffleTracking.enabled": "true"
     "spark.dynamicAllocation.executorAllocationRatio": "0.8"
     "spark.dynamicAllocation.schedulerBacklogTimeout": "30s"
