@@ -119,3 +119,10 @@ output "spark_team_irsa_created" {
   value = module.spark_team_irsa.iam_role_unique_id != "" ? true : false
 }
 
+output "karpenter_role_arn" {
+  value = aws_iam_role.karpenter_role.arn
+}
+
+output "name_sqs_karpenter" {
+  value = aws_sqs_queue.karpenter_interruption_queue.name
+}

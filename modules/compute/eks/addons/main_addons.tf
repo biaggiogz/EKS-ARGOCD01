@@ -10,22 +10,25 @@ module "eks_blueprints_addons" {
   cluster_version   = local.cluster_version
   oidc_provider_arn = local.eks_oidc_provider_arn
 
-  enable_karpenter = true
-  karpenter_enable_spot_termination = true
+  #enable_karpenter = true
+  #karpenter_enable_spot_termination = true
 
-  karpenter = {
+  /*karpenter = {
     chart_version       = "0.37.6"
     repository_username = data.aws_ecrpublic_authorization_token.token.user_name
     repository_password = data.aws_ecrpublic_authorization_token.token.password
+
   }
 
   karpenter_node =  {
     iam_role_additional_policies = {
       AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
     }
-  }
+  }*/
 
   eks_addons = {
+
+
     aws-ebs-csi-driver = {
       service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
@@ -117,6 +120,8 @@ module "eks_blueprints_addons" {
     ],
   }
 
+
+
   tags = local.labels
 
   depends_on = [module.ebs_csi_driver_irsa , kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class]
@@ -135,6 +140,7 @@ module "eks-data-addons" {
   spark_operator_helm_config = {
     values = [templatefile("${path.module}/helm-values/spark-operator-values.yaml", {})]
   }
+
 
 
   depends_on = [module.eks_blueprints_addons]
@@ -207,4 +213,13 @@ resource "null_resource" "wait_for_spark_operator" {
         --timeout=90s
     EOT
   }
+}
+
+resource "aws_eks_addon" "pod_identity_agent" {
+  cluster_name = local.cluster_name
+  addon_name   = "eks-pod-identity-agent"
+  addon_version = "v1.3.4-eksbuild.1"
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
 }

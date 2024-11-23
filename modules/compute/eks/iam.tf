@@ -155,6 +155,47 @@ resource "aws_iam_role_policy_attachment" "prometheus_remote_write_access" {
   role       = aws_iam_role.kubecost_role.name
 }
 
+resource "aws_iam_role_policy" "assume_role_for_pod_identity" {
+  name = "assume-role-for-pod-identity"
+  role = aws_iam_role.eks_nodes.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks-auth:AssumeRoleForPodIdentity"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
 
 
+resource "aws_iam_role" "karpenter_role" {
+  name = "${local.cluster_name}-karpenter"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}"
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub": "system:serviceaccount:karpenter:karpenter"
+          }
+        }
+      }
+    ]
+  })
+}
 
+resource "aws_iam_role_policy_attachment" "karpenter_policy_attachment" {
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/KarpenterControllerPolicy-${local.cluster_name}"
+  role       = aws_iam_role.karpenter_role.name
+}
