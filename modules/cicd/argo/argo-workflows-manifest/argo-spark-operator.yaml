@@ -5,7 +5,7 @@ metadata:
   namespace: argo-workflows
 spec:
   arguments: {}
-  entrypoint: sparkapp-operator
+  entrypoint: sparkapp-operator-test
   nodeSelector:
     NodeGroupType: SparkComputeOptimized  #NodeGroupType: SparkComputeOptimized  from NodePool
     karpenter.sh/capacity-type: "spot"
