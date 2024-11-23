@@ -45,6 +45,7 @@ kind: EC2NodeClass
 metadata:
   name: spark-compute-optimized-ec2
 spec:
+  amiFamily: AL2
   amiSelectorTerms:
     - tags:
         karpenter.k8s.aws/amiFamily: AL2
