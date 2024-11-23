@@ -45,8 +45,8 @@ spec:
     "fs.s3a.aws.credentials.provider": "com.amazonaws.auth.WebIdentityTokenCredentialsProvider"
   sparkConf:
     "spark.kubernetes.allocation.batch.size": "5"
-    "spark.kubernetes.driver.annotation.karpenter.sh/capacity-type:": "spot"
-    "spark.kubernetes.executor.annotation.karpenter.sh/capacity-type:": "spot"
+    "spark.kubernetes.driver.annotation.karpenter.sh/capacity-type": "spot"
+    "spark.kubernetes.executor.annotation.karpenter.sh/capacity-type": "spot"
     "spark.dynamicAllocation.shuffleTracking.enabled": "true"
     "spark.dynamicAllocation.executorAllocationRatio": "0.8"
     "spark.dynamicAllocation.schedulerBacklogTimeout": "30s"
