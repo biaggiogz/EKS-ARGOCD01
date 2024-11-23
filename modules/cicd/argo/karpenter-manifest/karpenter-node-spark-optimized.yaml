@@ -7,8 +7,8 @@ spec:
   template:
     metadata:
       labels:
-        nodeGroupType: SparkComputeOptimized
-        kubernetes.io/karpenter : SparkComputeOptimized
+        intent: apps
+        type: sparkTeam01
     spec:
       nodeClassRef:
         group: karpenter.k8s.aws
@@ -36,6 +36,11 @@ spec:
         - key: "karpenter.k8s.aws/instance-generation"
           operator: Gt
           values: ["2"]
+      taints:
+        - effect: NoSchedule
+          key: spark-compute-optimized
+          value: sparkTeam01
+
   limits:
     cpu: 1000
   disruption:
@@ -56,15 +61,11 @@ spec:
   role: "KarpenterNodeRole-EKS-01"
   subnetSelectorTerms:
     - tags:
-        Name: "EKS-01-private*"
         karpenter.sh/discovery: "EKS-01"
   securityGroupSelectorTerms:
     - tags:
-        Name: "EKS-01-node"
         karpenter.sh/discovery: "EKS-01"
-  instanceStorePolicy: RAID0
   tags:
-    karpenter.sh/discovery: "EKS-01"
-    type: karpenter
-    NodeGroupType: SparkComputeOptimized
-    multiArch: Spark
+    Name: karpenter.sh/nodepool/default
+    NodeType: "karpenter-spark"
+    IntentLabel: "apps"
