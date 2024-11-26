@@ -9,6 +9,7 @@ spec:
         type: karpenter
         NodeGroupType: SparkComputeOptimized
         multiArch: Spark
+
     spec:
       requirements:
         - key: "karpenter.sh/capacity-type"
@@ -32,14 +33,17 @@ spec:
         - key: "karpenter.k8s.aws/instance-generation"
           operator: Gt
           values: ["2"]
+      nodeClassRef:
+        group: karpenter.k8s.aws  # Updated since only a single version will be served
+        kind: EC2NodeClass
+        name: spark-compute-optimized
+      expireAfter: 48h
   limits:
     cpu: 1000
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 30s
-    expireAfter: 720h
   weight: 100
-
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 30s
 ---
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
@@ -47,8 +51,14 @@ metadata:
   name: spark-compute-optimized
 spec:
   amiSelectorTerms:
-    - alias: "bottlerocket@latest"
+    - alias: bottlerocket@v1.27.1
   role: "arn:aws:iam::891377107274:role/karpenter-EKS-01"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "EKS-01"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "EKS=01"
   blockDeviceMappings:
     - deviceName: /dev/xvda
       ebs:
@@ -62,12 +72,6 @@ spec:
     httpPutResponseHopLimit: 2
     httpTokens: required
   instanceStorePolicy: RAID0
-  subnetSelectorTerms:
-    - tags:
-      karpenter.sh/discovery: "EKS-01"
-  securityGroupSelectorTerms:
-    - tags:
-      karpenter.sh/discovery: "EKS-01"
 status:
   instanceProfile: "karpenter-EKS-01"
 
