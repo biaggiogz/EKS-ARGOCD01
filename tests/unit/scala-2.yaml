@@ -1,7 +1,7 @@
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
-  name: spark-pi-yunikorn-2
+  name: testing-09
   namespace: spark-team-dev
   labels:
     app: "pyspark-pi-2"
