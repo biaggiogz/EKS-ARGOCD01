@@ -21,9 +21,9 @@ spec:
     cores: 4
     memory: "16g"
     serviceAccount: spark-team-dev
-    nodeSelector:
-      nodeGroupType: SparkComputeOptimized-2
-      karpenter.sh/capacity-type: "spot"
+    #nodeSelector:
+      #nodeGroupType: SparkComputeOptimized-2
+      #karpenter.sh/capacity-type: "spot"
   executor:
     instances: 6
     cores: 4
@@ -31,9 +31,9 @@ spec:
     serviceAccount: spark-team-dev
     labels:
       version: 3.3.1
-    #nodeSelector:
-      #nodeGroupType: SparkComputeOptimized-2
-      #karpenter.sh/capacity-type: "spot"
+    nodeSelector:
+      nodeGroupType: SparkComputeOptimized-2
+      karpenter.sh/capacity-type: "on-demand"
   batchScheduler: yunikorn
   batchSchedulerOptions:
     queue: root.default
