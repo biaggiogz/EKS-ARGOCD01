@@ -3,6 +3,9 @@ kind: SparkApplication
 metadata:
   name: spark-pi-yunikorn-2
   namespace: spark-team-dev
+  labels:
+    app: "pyspark-pi"
+    queue: root.default
 spec:
   type: Scala
   mode: cluster
@@ -13,17 +16,21 @@ spec:
   sparkVersion: 3.5.3
   nodeSelector:
     nodeGroupType: SparkComputeOptimized-2
+    karpenter.sh/capacity-type: "spot"
   driver:
-    cores: 3
-    memory: "8g"
-    serviceAccount: spark-team-dev
-  executor:
-    instances: 4
-    cores: 3
-    memory: "8g"
+    cores: 4
+    memory: "16g"
     serviceAccount: spark-team-dev
     #nodeSelector:
-      #NodeGroupType: SparkComputeOptimized-2
+      #nodeGroupType: SparkComputeOptimized-2
+      #karpenter.sh/capacity-type: "spot"
+  executor:
+    instances: 6
+    cores: 4
+    memory: "16g"
+    serviceAccount: spark-team-dev
+    #nodeSelector:
+      #nodeGroupType: SparkComputeOptimized-2
       #karpenter.sh/capacity-type: "spot"
   batchScheduler: yunikorn
   batchSchedulerOptions:
