@@ -11,8 +11,8 @@ spec:
   mainClass: org.apache.spark.examples.SparkPi
   mainApplicationFile: local:///opt/spark/examples/jars/spark-examples.jar
   sparkVersion: 3.5.3
-  nodeSelector:
-    type: karpenter-2
+  #nodeSelector:
+    #type: karpenter-2
   driver:
     cores: 1
     memory: 512m

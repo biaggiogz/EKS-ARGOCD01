@@ -1,7 +1,7 @@
 apiVersion: sparkoperator.k8s.io/v1beta2
 kind: SparkApplication
 metadata:
-  name: spark-pi-yunikorn
+  name: spark-pi-yunikorn-2
   namespace: spark-team-dev
 spec:
   type: Scala
