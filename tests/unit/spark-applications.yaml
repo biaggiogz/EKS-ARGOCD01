@@ -1,7 +1,7 @@
 apiVersion: "sparkoperator.k8s.io/v1beta2"
 kind: ScheduledSparkApplication
 metadata:
-  name: spark-pi-scheduled
+  name: testing-10
   namespace: spark-team-dev
   labels:
     app: "pyspark-pi"
@@ -23,7 +23,7 @@ spec:
     mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
     sparkVersion: "3.3.1"
     nodeSelector:
-      type: karpenter
+      type: karpenter-2
     restartPolicy:
       type: OnFailure
       onFailureRetries: 1
@@ -39,10 +39,10 @@ spec:
       serviceAccount: spark-team-dev
       # Using Karpenter provisioner nodeSelectors and tolerations
       nodeSelector:
-        NodeGroupType: SparkComputeOptimized
+        NodeGroupType: SparkCompute
         karpenter.sh/capacity-type: "on-demand"
       tolerations:
-        - key: "spark-compute-optimized"
+        - key: "spark-compute"
           operator: "Exists"
           effect: "NoSchedule"
     executor:
@@ -54,12 +54,12 @@ spec:
         version: 3.3.1
       # Using Karpenter provisioner nodeSelectors and tolerations
       nodeSelector:
-        NodeGroupType: SparkComputeOptimized
+        NodeGroupType: SparkCompute
         karpenter.sh/capacity-type: "spot"
       tolerations:
-        - key: "spark-compute-optimized"
+        - key: "spark-compute"
           operator: "Exists"
           effect: "NoSchedule"
-   # batchScheduler: yunikorn
-   # batchSchedulerOptions:
-   #   queue: root.default
+  batchScheduler: yunikorn
+  batchSchedulerOptions:
+    queue: root.default
