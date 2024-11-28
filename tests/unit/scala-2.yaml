@@ -22,9 +22,9 @@ spec:
     cores: 1
     memory: "8g"
     serviceAccount: spark-team-dev
-    nodeSelector:
-      NodeGroupType: SparkComputeOptimized-2
-      karpenter.sh/capacity-type: "spot"
+    #nodeSelector:
+      #NodeGroupType: SparkComputeOptimized-2
+      #karpenter.sh/capacity-type: "spot"
   batchScheduler: yunikorn
   batchSchedulerOptions:
-    queue: root.test
+    queue: root.default.test
