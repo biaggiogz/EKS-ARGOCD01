@@ -1,13 +1,13 @@
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: spark-compute-optimized
+  name: spark-compute-optimized-2
 spec:
   template:
     metadata:
       labels:
-        type: karpenter
-        NodeGroupType: SparkComputeOptimized
+        type: karpenter-2
+        NodeGroupType: SparkComputeOptimized-2
         multiArch: Spark
 
     spec:
@@ -26,7 +26,7 @@ spec:
           values: ["c5d"]
         - key: "karpenter.k8s.aws/instance-cpu"
           operator: In
-          values: ["4", "8", "16", "36"]
+          values: ["4", "8"]
         - key: "karpenter.k8s.aws/instance-hypervisor"
           operator: In
           values: ["nitro"]
@@ -36,7 +36,7 @@ spec:
       nodeClassRef:
         group: karpenter.k8s.aws  # Updated since only a single version will be served
         kind: EC2NodeClass
-        name: spark-compute-optimized
+        name: spark-compute-optimized-2
       expireAfter: 48h
   limits:
     cpu: 1000
@@ -48,11 +48,11 @@ spec:
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: spark-compute-optimized
+  name: spark-compute-optimized-2
 spec:
   amiSelectorTerms:
-    - alias: bottlerocket@v1.27.1
-  role: "arn:aws:iam::891377107274:role/karpenter-EKS-01"
+    - alias: al2023@v20240703
+  role: "Core-node-EKS-01-eks-node-group-20241128181012764600000001"
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "EKS-01"
@@ -62,7 +62,7 @@ spec:
   blockDeviceMappings:
     - deviceName: /dev/xvda
       ebs:
-        volumeSize: 100Gi
+        volumeSize: 50Gi
         volumeType: gp3
         encrypted: true
         deleteOnTermination: true
@@ -72,6 +72,4 @@ spec:
     httpPutResponseHopLimit: 2
     httpTokens: required
   instanceStorePolicy: RAID0
-status:
-  instanceProfile: "karpenter-EKS-01"
 

@@ -1,4 +1,3 @@
----
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -7,17 +6,15 @@ spec:
   template:
     metadata:
       labels:
-        intent: apps
-        type: sparkTeam01
+        type: karpenter
+        NodeGroupType: SparkComputeOptimized
+        multiArch: Spark
+
     spec:
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: spark-compute-optimized-ec2
       requirements:
         - key: "karpenter.sh/capacity-type"
           operator: In
-          values: ["spot"]
+          values: ["spot", "on-demand"]
         - key: "kubernetes.io/arch"
           operator: In
           values: ["amd64"]
@@ -36,36 +33,45 @@ spec:
         - key: "karpenter.k8s.aws/instance-generation"
           operator: Gt
           values: ["2"]
-      taints:
-        - effect: NoSchedule
-          key: spark-compute-optimized
-          value: sparkTeam01
-
+      nodeClassRef:
+        group: karpenter.k8s.aws  # Updated since only a single version will be served
+        kind: EC2NodeClass
+        name: spark-compute-optimized
+      expireAfter: 48h
   limits:
     cpu: 1000
+  weight: 100
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
-    expireAfter: 48h
-  weight: 100
 ---
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
 metadata:
-  name: spark-compute-optimized-ec2
+  name: spark-compute-optimized
 spec:
-  amiFamily: AL2
   amiSelectorTerms:
-    - tags:
-        karpenter.k8s.aws/amiFamily: AL2
-  role: "KarpenterNodeRole-EKS-01"
-  subnetSelectorTerms:
-    - tags:
-        karpenter.sh/discovery: "EKS-01"
+    - alias: bottlerocket@v1.27.1
+  role: "Core-node-EKS-01-eks-node-group-20241128181012764600000001"
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "EKS-01"
-  tags:
-    Name: karpenter.sh/nodepool/spark-compute-optimized
-    NodeType: "karpenter-spark"
-    IntentLabel: "apps"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "EKS=01"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 50Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+  instanceStorePolicy: RAID0
+status:
+  instanceProfile: "karpenter-EKS-01"
+

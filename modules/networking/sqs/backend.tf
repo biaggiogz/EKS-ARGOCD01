@@ -29,14 +29,10 @@ terraform {
       source = "argoproj-labs/argocd"
       version = "7.0.0"
     }
-    external = {
-      source = "hashicorp/external"
-      version = "2.3.4"
-    }
   }
   backend "s3" {
     bucket         = "terraform-state-production-01"
-    key            = "modules/cicd/argoapps/terraform.tfstate"
+    key            = "modules/compute/eks/helm/terraform.tfstate"
     region         = "eu-north-1"
     encrypt        = true
     kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
@@ -72,16 +68,4 @@ provider "kubectl" {
   cluster_ca_certificate = base64decode(data.terraform_remote_state.eks.outputs.cluster_certificate_authority_data)
   load_config_file       = false
   token                  = data.terraform_remote_state.eks.outputs.kubectl.token
-}
-
-
-
-provider "aws" {
-  region = "eu-north-1"
-
-}
-
-provider "aws" {
-  alias  = "ecr"
-  region = "us-east-1"
 }
