@@ -11,14 +11,14 @@ spec:
   mainClass: org.apache.spark.examples.SparkPi
   mainApplicationFile: local:///opt/spark/examples/jars/spark-examples.jar
   sparkVersion: 3.5.3
-  #nodeSelector:
-    #type: karpenter-2
+  nodeSelector:
+    type: karpenter
   driver:
     cores: 1
     memory: 4g
     serviceAccount: spark-team-dev
     nodeSelector:
-      NodeGroupType: SparkComputeOptimized-2
+      NodeGroupType: SparkComputeOptimized
       karpenter.sh/capacity-type: "on-demand"
   executor:
     instances: 2

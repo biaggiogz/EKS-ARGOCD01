@@ -11,20 +11,20 @@ spec:
   mainClass: org.apache.spark.examples.SparkPi
   mainApplicationFile: local:///opt/spark/examples/jars/spark-examples.jar
   sparkVersion: 3.5.3
-  #nodeSelector:
-    #type: karpenter-2
+  nodeSelector:
+    type: karpenter-2
   driver:
     cores: 1
-    memory: 4g
+    memory: "8g"
     serviceAccount: spark-team-dev
   executor:
-    instances: 2
+    instances: 4
     cores: 1
-    memory: 4g
+    memory: "8g"
     serviceAccount: spark-team-dev
     nodeSelector:
       NodeGroupType: SparkComputeOptimized-2
       karpenter.sh/capacity-type: "spot"
   batchScheduler: yunikorn
   batchSchedulerOptions:
-    queue: root.default
+    queue: root.test
