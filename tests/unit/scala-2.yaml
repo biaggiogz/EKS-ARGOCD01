@@ -7,28 +7,30 @@ metadata:
     app: "pyspark-pi"
     queue: root.default
 spec:
-  type: Scala
+  type: Python
+  pythonVersion: "3"
   mode: cluster
-  image: spark:3.5.3
-  imagePullPolicy: IfNotPresent
-  mainClass: org.apache.spark.examples.SparkPi
-  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples.jar
-  sparkVersion: 3.5.3
-  nodeSelector:
-    nodeGroupType: SparkComputeOptimized-2
-    karpenter.sh/capacity-type: "spot"
+  image: "public.ecr.aws/data-on-eks/spark3.3.1-hadoop3.2-aws-java-sdk-bundle-1.12.647"
+  imagePullPolicy: Always
+  mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
+  sparkVersion: "3.3.1"
+  #nodeSelector:
+    #nodeGroupType: SparkComputeOptimized-2
+    #karpenter.sh/capacity-type: "on-demand"
   driver:
     cores: 4
     memory: "16g"
     serviceAccount: spark-team-dev
-    #nodeSelector:
-      #nodeGroupType: SparkComputeOptimized-2
-      #karpenter.sh/capacity-type: "spot"
+    nodeSelector:
+      nodeGroupType: SparkComputeOptimized-2
+      karpenter.sh/capacity-type: "spot"
   executor:
     instances: 6
     cores: 4
     memory: "16g"
     serviceAccount: spark-team-dev
+    labels:
+      version: 3.3.1
     #nodeSelector:
       #nodeGroupType: SparkComputeOptimized-2
       #karpenter.sh/capacity-type: "spot"
