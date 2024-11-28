@@ -3,11 +3,17 @@ kind: ScheduledSparkApplication
 metadata:
   name: spark-pi-scheduled
   namespace: spark-team-dev
+  labels:
+    app: "pyspark-pi"
+    applicationId: "pyspark-pi-karpenter"
+    # Assign the job to a Yunikorn Queue via label.
+    queue: root.default
 spec:
   schedule: "@every 5m"
   concurrencyPolicy: Allow
   successfulRunHistoryLimit: 1
   failedRunHistoryLimit: 3
+
   template:
     type: Python
     pythonVersion: "3"
@@ -16,6 +22,8 @@ spec:
     imagePullPolicy: Always
     mainApplicationFile: local:///opt/spark/examples/src/main/python/pi.py
     sparkVersion: "3.3.1"
+    nodeSelector:
+      type: karpenter
     restartPolicy:
       type: OnFailure
       onFailureRetries: 1
@@ -41,14 +49,17 @@ spec:
       cores: 1
       instances: 4
       memory: "4g"
-      serviceAccount: spark-team-a
+      serviceAccount: spark-team-dev
       labels:
         version: 3.3.1
       # Using Karpenter provisioner nodeSelectors and tolerations
       nodeSelector:
-        NodeGroupType: SparkGravitonComputeOptimized
+        NodeGroupType: SparkComputeOptimized
         karpenter.sh/capacity-type: "spot"
       tolerations:
         - key: "spark-compute-optimized"
           operator: "Exists"
           effect: "NoSchedule"
+   # batchScheduler: yunikorn
+   # batchSchedulerOptions:
+   #   queue: root.default

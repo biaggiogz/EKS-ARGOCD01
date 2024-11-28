@@ -7,7 +7,7 @@ spec:
     metadata:
       labels:
         type: karpenter-2
-        NodeGroupType: SparkComputeOptimized-2
+        nodeGroupType: SparkComputeOptimized-2
         multiArch: Spark
 
     spec:
@@ -71,5 +71,5 @@ spec:
     httpProtocolIPv6: disabled
     httpPutResponseHopLimit: 2
     httpTokens: required
-  instanceStorePolicy: RAID0
+  #instanceStorePolicy: RAID0
 

@@ -3,6 +3,11 @@ kind: SparkApplication
 metadata:
   name: spark-pi-yunikorn
   namespace: spark-team-dev
+  labels:
+    app: "pyspark-pi"
+    applicationId: "pyspark-pi-karpenter"
+    # Assign the job to a Yunikorn Queue via label.
+    queue: root.default
 spec:
   type: Scala
   mode: cluster
