@@ -75,3 +75,11 @@ output "kubectl" {
   sensitive = true
 
 }
+output "eks_oidc_provider_arn" {
+  value = module.eks.oidc_provider_arn
+  sensitive = true
+
+}
+output "oidc_provider" {
+  value = module.eks.oidc_provider
+}
