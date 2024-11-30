@@ -83,3 +83,6 @@ output "eks_oidc_provider_arn" {
 output "oidc_provider" {
   value = module.eks.oidc_provider
 }
+output "vpc_cni_arn" {
+  value = module.vpc_cni_irsa.iam_role_arn
+}

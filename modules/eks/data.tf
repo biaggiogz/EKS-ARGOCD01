@@ -9,7 +9,6 @@ data "aws_partition" "current" {}
 data "aws_eks_cluster_auth" "eks" {
   name = module.eks.cluster_name
 }
-
 data "terraform_remote_state" "vpc" {
   backend = "s3"
 

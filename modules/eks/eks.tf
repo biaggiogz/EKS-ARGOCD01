@@ -89,6 +89,7 @@ module "eks" {
       # See README for further details
       before_compute = true
       most_recent    = true # To ensure access to the latest settings provided
+      #service_account_role_arn = module.vpc_cni_irsa.iam_role_arn
       configuration_values = jsonencode({
         env = {
           # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
@@ -106,6 +107,26 @@ module "eks" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.eks_ecr_policy,
     aws_iam_role_policy_attachment.eks_cluster_policy,
-    aws_iam_role_policy_attachment.eks_loadbalancer_policy
+    aws_iam_role_policy_attachment.eks_loadbalancer_policy,
   ]
+
+}
+
+
+module "vpc_cni_irsa" {
+  source                = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version               = "~> 5.34"
+  role_name_prefix      = format("%s-%s-", var.cluster_name, "vpc_cni")
+  attach_ebs_csi_policy = true
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+  attach_vpc_cni_policy = true
+  vpc_cni_enable_cloudwatch_logs = true
+  vpc_cni_enable_ipv4 = true
+  tags = local.tags
+
 }
