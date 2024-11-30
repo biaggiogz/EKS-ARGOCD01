@@ -24,10 +24,41 @@ terraform {
   }
   backend "s3" {
     bucket         = "terraform-state-dev-01"
-    key            = "modules/eks/terraform.tfstate"
+    key            = "modules/addons/terraform.tfstate"
     region         = "eu-north-1"
     encrypt        = true
     kms_key_id     = "arn:aws:kms:eu-north-1:891377107274:key/e16b4178-7296-49f6-9cff-2fc61c2d474d"
 
   }
+}
+
+
+provider "kubernetes" {
+  host                   = local.cluster_endpoint
+  cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", local.cluster_name]
+  }
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = local.cluster_endpoint
+    cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", local.cluster_name]
+    }
+  }
+}
+
+provider "kubectl" {
+  apply_retry_count      = 30
+  host                   = local.cluster_endpoint
+  cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+  load_config_file       = false
+  token                  = local.token
 }

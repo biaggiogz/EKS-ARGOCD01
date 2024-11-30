@@ -43,7 +43,15 @@ locals  {
   oidc_provider = data.terraform_remote_state.eks.outputs.oidc_provider
   cluster_endpoint = data.terraform_remote_state.eks.outputs.cluster_endpoint
   cluster_certificate_authority_data = data.terraform_remote_state.eks.outputs.cluster_certificate_authority_data
+  cluster_version = data.terraform_remote_state.eks.outputs.cluster_version
   token                  = data.terraform_remote_state.eks.outputs.kubectl.token
+  cluster_oidc_issuer_url = data.terraform_remote_state.eks.outputs.cluster_oidc_issuer_url
 
 }
+locals {
 
+  tags = {
+    branch  = "dev-01"
+  }
+
+}
