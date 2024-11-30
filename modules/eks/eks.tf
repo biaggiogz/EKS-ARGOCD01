@@ -74,9 +74,6 @@ module "eks" {
   }
 
   cluster_addons = {
-    eks-pod-identity-agent = {
-      most_recent = true
-    }
     coredns                = {
       most_recent = true
     }
