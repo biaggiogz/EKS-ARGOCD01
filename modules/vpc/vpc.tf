@@ -13,8 +13,8 @@ module "vpc" {
 
   public_subnets = var.public_subnets
 
-  create_database_subnet_group       = true
-  create_database_subnet_route_table = true
+  create_database_subnet_group       = false
+  create_database_subnet_route_table = false
 
 
   enable_nat_gateway   = true
@@ -26,14 +26,13 @@ module "vpc" {
 
   public_subnet_tags = {
     "kubernetes.io/role/elb"                            = 1
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb"                   = 1
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "karpenter.sh/discovery" = var.cluster_name
-
 
   }
 

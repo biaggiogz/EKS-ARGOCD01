@@ -5,6 +5,8 @@ locals {
   azs             = slice(data.aws_availability_zones.available.names, 0, 2)
   tags = {
     branch  = "dev-01"
+    "karpenter.sh/discovery" = var.cluster_name
+
   }
 
 }

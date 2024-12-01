@@ -1,11 +1,8 @@
+#############################################STEP 1###############################
 
 
-#KARPENTER_VERSION_V=$(curl -sL "https://api.github.com/repos/aws/karpenter/releases/latest" | jq -r ".tag_name")
-#export KARPENTER_VERSION="${KARPENTER_VERSION_V/v}"
-#echo "Karpenter's Latest release version: $KARPENTER_VERSION"
-
-#export KARPENTER_NAMESPACE="kube-system"
-#export KARPENTER_VERSION="1.1.0"
+#export KARPENTER_NAMESPACE="karpenter"
+#export KARPENTER_VERSION="1.0.8"  ##############version stable
 #export K8S_VERSION="1.30"
 
 
@@ -26,6 +23,7 @@
 #--capabilities CAPABILITY_NAMED_IAM \
 #--parameter-overrides "ClusterName=${CLUSTER_NAME}"
 
+#############################################STEP 2###############################
 
 
 #eksctl create iamidentitymapping \
@@ -36,6 +34,7 @@
 #  --group system:nodes
 
 #kubectl describe configmap -n kube-system aws-auth
+#############################################STEP 3###############################
 
 #eksctl create iamserviceaccount \
 #  --cluster "${CLUSTER_NAME}" --name karpenter --namespace $KARPENTER_NAMESPACE \
@@ -43,13 +42,11 @@
 #  --attach-policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/KarpenterControllerPolicy-${CLUSTER_NAME}" \
 #  --role-only \
 #  --approve
+#############################################STEP 4###############################
 
 #eksctl get iamserviceaccount --cluster $CLUSTER_NAME --namespace $KARPENTER_NAMESPACE
 
 #export KARPENTER_IAM_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/${CLUSTER_NAME}-karpenter"
-
-
-
 
 #######  --set settings.isolatedVPC=true \ aws eks describe-cluster --name EKS-02 --query "cluster.resourcesVpcConfig" --output json
 #Look for the following fields in the output:
@@ -59,6 +56,7 @@
 #aws ec2 describe-internet-gateways --query "InternetGateways[*].Attachments"
 #If the VPC associated with your EKS cluster has no IGW attached, it is isolated.
 
+#############################################STEP 5###############################
 
 
 #echo Your Karpenter version is: $KARPENTER_VERSION
@@ -75,7 +73,34 @@
 #  --set controller.resources.limits.cpu=1 \
 #  --set controller.resources.limits.memory=1Gi \
 #  --wait
+#############################################STEP 6###############################
+##HERE IS HAPPENING THAT WHEN KARPENTER IS INSTALLED, ALL CDRS POINTING TO KUBE-SYSTEM, WHICH IS WRONG, SO THE NAMESPACE MUST BE CHANGED
+##kubectl edit crd nodeclaims.karpenter.sh
+#kubectl edit crd nodepools.karpenter.sh
+#kubectl edit crd ec2nodeclasses.karpenter.k8s.aws
+##kubectl rollout restart deployment -n karpenter karpenter
 
+##or
+#SERVICE_NAME="karpenter"
+#SERVICE_NAMESPACE="karpenter"
+#SERVICE_PORT="8443"
+#CRDS=("nodepools.karpenter.sh" "nodeclaims.karpenter.sh" "ec2nodeclasses.karpenter.k8s.aws")
+#
+#for crd in ${CRDS[@]}; do
+#  kubectl patch customresourcedefinitions ${crd} --patch-file=/dev/stdin <<-EOF
+#spec:
+#  conversion:
+#    webhook:
+#      clientConfig:
+#        service:
+#          name: "${SERVICE_NAME}"
+#          namespace: "${SERVICE_NAMESPACE}"
+#          port: ${SERVICE_PORT}
+#EOF
+#done
+
+
+#############################################STEP 6###############################
 
 ##helm list -n $KARPENTER_NAMESPACE
 #There should be at least two pods karpenter-controller and karpenter-webhook
@@ -83,9 +108,18 @@
 #There should be only one deployment Karpenter
 #kubectl get deployment -n $KARPENTER_NAMESPACE -l app.kubernetes.io/name=karpenter
 
+
+
+
+#############################################STEP 7###############################
+
+
 #wget -O eks-node-viewer https://github.com/awslabs/eks-node-viewer/releases/download/v0.6.0/eks-node-viewer_Linux_x86_64
 #chmod +x eks-node-viewer
 #sudo mv -v eks-node-viewer /usr/local/bin
 #eks-node-viewer
 
 #It is essential to create a NodePool as Karpenter will remain inactive until at least one NodePool is configured
+
+#aws iam create-instance-profile --instance-profile-name "KarpenterNodeInstanceProfile-EKS-02"
+#aws iam add-role-to-instance-profile --instance-profile-name "KarpenterNodeInstanceProfile-EKS-02" --role-name "KarpenterNodeRole-EKS-02"

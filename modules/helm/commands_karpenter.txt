@@ -1,0 +1,10 @@
+kubectl scale deployment -n workshop inflate --replicas 5
+kubectl logs -f -n karpenter -l app.kubernetes.io/name=karpenter -c controller
+kubectl -n $KARPENTER_NAMESPACE logs -l app.kubernetes.io/name=karpenter | grep launched | jq -s
+kubectl -n karpenter logs -f deployment/karpenter --all-containers=true --since=20m
+eks-node-viewer
+kubectl get nodes -l eks-immersion-team=my-team
+
+kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller
+
+
