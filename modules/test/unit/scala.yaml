@@ -1,0 +1,14 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-pi
+  namespace: spark-team-dev
+spec:
+  type: Scala
+  mode: cluster
+  image: spark:3.5.1
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.12-3.5.1.jar
+  nodeSelector:
+    type: general
+    karpenter.sh/capacity-type: "on-demand"
