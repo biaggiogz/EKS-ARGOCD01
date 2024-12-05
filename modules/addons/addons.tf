@@ -61,8 +61,6 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = local.cluster_endpoint
   cluster_version   = local.cluster_version
   oidc_provider_arn = local.eks_oidc_provider_arn
-  enable_karpenter                  = true
-  ##helm upgrade --install karpenter-crd oci://public.ecr.aws/karpenter/karpenter-crd --version 1.0.1 --namespace karpenter
   enable_aws_cloudwatch_metrics = true
   aws_cloudwatch_metrics = {
     values = [
@@ -77,10 +75,12 @@ module "eks_blueprints_addons" {
 
         # This toleration allows Daemonset pod to be scheduled on any node, regardless of their Taints.
         tolerations:
-          - operator: Exists
+          - key: "spark.com/dev"
+            operator: "Equal"
+            value: "true"
+            effect: "NoSchedule"
       EOT
     ]
   }
-  enable_kube_prometheus_stack = true
   tags = local.tags
 }

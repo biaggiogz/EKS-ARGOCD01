@@ -72,6 +72,9 @@
 #  --set controller.resources.requests.memory=1Gi \
 #  --set controller.resources.limits.cpu=1 \
 #  --set controller.resources.limits.memory=1Gi \
+#  --set controller.env[0].name=KARPENTER_RESPECT_YUNIKORN_SCHEDULING \   ###if you are using yunikorn
+#  --set controller.env[0].value=true   ###if you are using yunikorn
+#  --debug \
 #  --wait
 #############################################STEP 6###############################
 ##HERE IS HAPPENING THAT WHEN KARPENTER IS INSTALLED, ALL CDRS POINTING TO KUBE-SYSTEM, WHICH IS WRONG, SO THE NAMESPACE MUST BE CHANGED

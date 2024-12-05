@@ -1,0 +1,47 @@
+Name:         spark-pi-scala
+Namespace:    spark-team-dev
+Labels:       <none>
+Annotations:  <none>
+API Version:  sparkoperator.k8s.io/v1beta2
+Kind:         SparkApplication
+Metadata:
+  Creation Timestamp:  2024-12-05T12:02:51Z
+  Generation:          6
+  Resource Version:    2069098
+  UID:                 fc100bed-203e-41d7-8bd0-e94b1db27a1b
+Spec:
+  Deps:
+  Driver:
+    Core Limit:  1200m
+    Cores:       1
+    Labels:
+      Version:        3.5.1
+    Memory:           512m
+    Service Account:  spark-team-dev
+  Executor:
+    Cores:      1
+    Instances:  2
+    Labels:
+      Version:            3.5.1
+    Memory:               512m
+  Image:                  apache/spark:3.5.1
+  Image Pull Policy:      Always
+  Main Application File:  local:///opt/spark/examples/jars/spark-examples_2.12-3.5.1.jar
+  Main Class:             org.apache.spark.examples.SparkPi
+  Mode:                   cluster
+  Restart Policy:
+    On Failure Retries:                    3
+    On Failure Retry Interval:             10
+    On Submission Failure Retries:         5
+    On Submission Failure Retry Interval:  20
+    Type:                                  OnFailure
+  Spark Conf:
+    spark.kubernetes.driver.tolerations:           dedicated=spark:NoSchedule
+    spark.kubernetes.executor.tolerations:         dedicated=spark:NoSchedule
+    spark.kubernetes.node.selector.NodeGroupType:  SparkComputeOptimized
+  Spark Version:                                   3.5.1
+  Type:                                            Scala
+  Volumes:
+    Name:  spark-driver-volume
+    Persistent Volume Claim:
+      Claim Name:  spark-driver-pvc

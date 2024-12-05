@@ -7,7 +7,12 @@ data:
   service.volumeBindTimeout: "60s"
   service.placeholderImage: "registry.k8s.io/pause:3.7"
   service.operatorPlugins: "general,spark-k8s-operator,spark"
-  admissionController.filtering.bypassNamespaces: "^kube-system$"
+  admissionController.filtering.bypassNamespaces: "^kube-system$,^karpenter$"
+  service.overcommitFactor: "1.5"
+  service.enableDynamicQueueSizing: "true"
+  service.enablePlaceholderPods: "true"
+  service.gangSchedulingStyle: "Soft"
+
   queues.yaml: |
     partitions:
       - name: default
@@ -20,11 +25,19 @@ data:
               - name: default
                 resources:
                   guaranteed:
-                    memory: 1000G
-                    vcore: 1000
+                    memory: 4000G
+                    vcore: 2000
                   max:
-                    memory: 1000G
-                    vcore: 1000
+                    memory: 6000G
+                    vcore: 3000
+              - name: spark
+                resources:
+                  guaranteed:
+                    memory: 6000G
+                    vcore: 3000
+                  max:
+                    memory: 8000G
+                    vcore: 5000
               - name: prod
                 resources:
                   guaranteed:

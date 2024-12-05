@@ -133,6 +133,7 @@ resource "kubernetes_cluster_role" "spark_role" {
     resources  = ["jobs"]
   }
 
+
   rule {
     verbs      = ["get", "list", "watch", "describe", "create", "edit", "delete", "annotate", "patch", "label"]
     api_groups = ["extensions"]

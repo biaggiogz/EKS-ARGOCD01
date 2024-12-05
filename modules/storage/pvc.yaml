@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spark-driver-pvc
+  namespace: spark-team-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: "EKS-01-dynamic-pvc-4946acee-2678-4282-8668-64dc75aa864a"
