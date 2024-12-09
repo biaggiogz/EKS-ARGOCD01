@@ -61,26 +61,6 @@ module "eks_blueprints_addons" {
   cluster_endpoint  = local.cluster_endpoint
   cluster_version   = local.cluster_version
   oidc_provider_arn = local.eks_oidc_provider_arn
-  enable_aws_cloudwatch_metrics = true
-  aws_cloudwatch_metrics = {
-    values = [
-      <<-EOT
-        resources:
-          limits:
-            cpu: 500m
-            memory: 1Gi
-          requests:
-            cpu: 200m
-            memory: 800Mi
 
-        # This toleration allows Daemonset pod to be scheduled on any node, regardless of their Taints.
-        tolerations:
-          - key: "spark.com/dev"
-            operator: "Equal"
-            value: "true"
-            effect: "NoSchedule"
-      EOT
-    ]
-  }
   tags = local.tags
 }
