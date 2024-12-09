@@ -19,15 +19,28 @@ prometheus:
     scrapeTimeout: 50s
     storageSpec:
       volumeClaimTemplate:
-        metadata:
-          name: data
+        #metadata:
+          #name: data
         spec:
-          storageClassName: ${storage_class_type}
+          storageClassName: ${storage_class_name}
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
               storage: 50Gi
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: type
+                  operator: In
+                  values:
+                    - monitor
+                - key: NodeGroupType
+                  operator: In
+                  values:
+                    - MonitoringComputeOptimized
     additionalScrapeConfigs:
       - job_name: kubecost
         honor_labels: true
@@ -40,13 +53,25 @@ prometheus:
               - kubecost-cost-analyzer.kubecost
             type: 'A'
             port: 9003
-
+      - job_name: karpenter
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - karpenter
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_endpoints_name
+              - __meta_kubernetes_endpoint_port_name
+            action: keep
+            regex: karpenter;http-metrics
             ################
   serviceMonitor:
     enabled: true
 #####################################
 alertmanager:
   enabled: false
+
 
 grafana:
   enabled: true
@@ -68,8 +93,17 @@ grafana:
       isDefault: false
       url: ${amp_url}
 
+
+
+
       #####################
 prometheusRule:
   enabled: true
 
   #########################
+
+#thanosRuler:
+  #thanosRulerSpec:
+    #nodeSelector:
+      #type: monitor
+      #NodeGroupType: MonitoringComputeOptimized

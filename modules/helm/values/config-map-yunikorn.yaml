@@ -7,7 +7,7 @@ data:
   service.volumeBindTimeout: "60s"
   service.placeholderImage: "registry.k8s.io/pause:3.7"
   service.operatorPlugins: "general,spark-k8s-operator,spark"
-  admissionController.filtering.bypassNamespaces: "^kube-system$,^karpenter$"
+  admissionController.filtering.bypassNamespaces: "^kube-system$,^karpenter$,^kube-prometheus-stack$"
   service.overcommitFactor: "1.5"
   service.enableDynamicQueueSizing: "true"
   service.enablePlaceholderPods: "true"
@@ -37,6 +37,14 @@ data:
                     vcore: 3000
                   max:
                     memory: 8000G
+                    vcore: 5000
+              - name: monitoring
+                resources:
+                  guaranteed:
+                    memory: 600G
+                    vcore: 3000
+                  max:
+                    memory: 800G
                     vcore: 5000
               - name: prod
                 resources:

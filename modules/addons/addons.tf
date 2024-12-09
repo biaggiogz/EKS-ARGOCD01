@@ -1,19 +1,21 @@
-resource "aws_eks_addon" "ebs_csi_driver" {
+/*resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name = local.cluster_name
   addon_name   = "aws-ebs-csi-driver"
 
   preserve         = true
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "PRESERVE"
-
   addon_version = "v1.37.0-eksbuild.1"
-  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+  service_account_role_arn = module.role_ebs_csi_driver.iam_role_arn
 
   lifecycle {
     ignore_changes = [addon_version, resolve_conflicts_on_create, resolve_conflicts_on_update]
   }
 
 }
+*/
+
+/*
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "ebs_csi_driver"
 
@@ -38,29 +40,7 @@ resource "aws_iam_role" "ebs_csi_driver" {
     ignore_changes = [name]
   }
 }
+*/
 
 
 
-resource "kubernetes_service_account" "ebs_csi_controller_sa" {
-  metadata {
-    name      = "ebs-csi-controller-sa"
-    namespace = "kube-system"
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.ebs_csi_driver.arn
-    }
-  }
-
-}
-
-
-module "eks_blueprints_addons" {
-
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.19.0"
-  cluster_name      = local.cluster_name
-  cluster_endpoint  = local.cluster_endpoint
-  cluster_version   = local.cluster_version
-  oidc_provider_arn = local.eks_oidc_provider_arn
-
-  tags = local.tags
-}

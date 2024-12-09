@@ -44,7 +44,7 @@ locals  {
   token                  = data.terraform_remote_state.eks.outputs.kubectl.token
   cluster_oidc_issuer_url = data.terraform_remote_state.eks.outputs.cluster_oidc_issuer_url
   region = "eu-north-1"
-  amp_namespace              = "kube-prometheus-stack-${local.cluster_name}"
+  amp_namespace              = "kube-prometheus-stack"
   amp_ingest_service_account = "amp-iamproxy-ingest-service-account"
 
 }
@@ -57,4 +57,9 @@ locals {
 }
 data "aws_ecrpublic_authorization_token" "token" {
   provider = aws.ecr
+}
+
+variable "secret_grafana" {
+  type = string
+  sensitive = true
 }

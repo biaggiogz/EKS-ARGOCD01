@@ -112,6 +112,10 @@ module "eks" {
   }
 
   cluster_addons = {
+    aws-ebs-csi-driver = {
+      service_account_role_arn = module.role_ebs_csi_driver.iam_role_arn
+      most_recent = true
+    }
     coredns                = {
       most_recent = true
     }

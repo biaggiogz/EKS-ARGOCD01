@@ -8,6 +8,8 @@ spec:
       labels:
         type: monitor
         NodeGroupType: MonitoringComputeOptimized
+        yunikorn.apache.org/queue: "root.monitoring"
+        yunikorn.apache.org/scheduler: "true"
     spec:
       requirements:
         - key: kubernetes.io/arch
@@ -32,12 +34,12 @@ spec:
         kind: EC2NodeClass
         name: monitoring-compute
       expireAfter: Never
-  weight: 100
+  #weight: 10   #is removed when it is not necessary a single node
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 30s
   limits:
-    cpu: 100
+    cpu: 34
     memory: 8Gi
 ---
 apiVersion: karpenter.k8s.aws/v1

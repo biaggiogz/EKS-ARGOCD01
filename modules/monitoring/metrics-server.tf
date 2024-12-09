@@ -7,6 +7,8 @@ resource "helm_release" "metrics_server" {
   create_namespace = false
   version          = "3.12.0"
 
-  values = [templatefile("${path.module}/values/metrics-server-values.yaml", {})]
+  values = [templatefile("${path.module}/values/metrics-server-values.yaml", {
+
+  })]
 
 }

@@ -68,12 +68,12 @@
 #  --set settings.clusterEndpoint=${CLUSTER_ENDPOINT} \
 #  --set settings.featureGates.spotToSpotConsolidation=true \
 #  --set settings.interruptionQueue=${CLUSTER_NAME} \
-#  --set controller.resources.requests.cpu=1 \
-#  --set controller.resources.requests.memory=1Gi \
+#  --set controller.resources.requests.cpu=500 \
+#  --set controller.resources.requests.memory=500Mi \
 #  --set controller.resources.limits.cpu=1 \
 #  --set controller.resources.limits.memory=1Gi \
 #  --set controller.env[0].name=KARPENTER_RESPECT_YUNIKORN_SCHEDULING \   ###if you are using yunikorn
-#  --set controller.env[0].value=true   ###if you are using yunikorn
+#  --set-string controller.env[0].value=true \   ###if you are using yunikorn
 #  --debug \
 #  --wait
 #############################################STEP 6###############################
@@ -126,3 +126,16 @@
 
 #aws iam create-instance-profile --instance-profile-name "KarpenterNodeInstanceProfile-EKS-02"
 #aws iam add-role-to-instance-profile --instance-profile-name "KarpenterNodeInstanceProfile-EKS-02" --role-name "KarpenterNodeRole-EKS-02"
+
+
+##when you want to check controller
+#kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller --follow
+
+#kubectl scale deployment -n workshop inflate --replicas 5
+#kubectl logs -f -n karpenter -l app.kubernetes.io/name=karpenter -c controller
+#kubectl -n $KARPENTER_NAMESPACE logs -l app.kubernetes.io/name=karpenter | grep launched | jq -s
+#kubectl -n karpenter logs -f deployment/karpenter --all-containers=true --since=20m
+#eks-node-viewer
+#kubectl get nodes -l eks-immersion-team=my-team
+#
+#kubectl logs -n karpenter -l app.kubernetes.io/name=karpenter -c controller

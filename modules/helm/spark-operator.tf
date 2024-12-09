@@ -202,7 +202,3 @@ resource "helm_release" "spark_operator" {
   depends_on = [kubernetes_namespace.spark_operator]
 }
 
-#Use annotations in SparkApplication resources:
-#metadata:
-#  annotations:
-#    yunikorn.apache.org/scheduler-name: yunikorn
