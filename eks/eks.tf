@@ -94,13 +94,6 @@ module "eks" {
         "karpenter.sh/discovery" = local.cluster_name
         "karpenter.sh/controller" = "true"
       }
-      taints = {
-        karpenter = {
-          key    = "karpenter.sh/controller"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }
-      }
     }
   }
 
