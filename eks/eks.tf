@@ -3,6 +3,9 @@ data "aws_caller_identity" "current" {}
 data "aws_iam_session_context" "current" {
   arn = data.aws_caller_identity.current.arn
 }
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
+}
 
 module "common_vars" {
   source = "../common-files"
@@ -105,21 +108,9 @@ module "eks" {
     eks-pod-identity-agent ={
       most_recent = true
     }
-   /* aws-ebs-csi-driver = {
-      service_account_role_arn = module.role_ebs_csi_driver.iam_role_arn
-      most_recent = true
-    }*/
+
     coredns                = {
       most_recent = true
-      configuration_values = jsonencode({
-        tolerations = [
-          {
-            key    = "karpenter.sh/controller"
-            value  = "true"
-            effect = "NoSchedule"
-          }
-        ]
-      })
     }
     kube-proxy             = {
       most_recent = true

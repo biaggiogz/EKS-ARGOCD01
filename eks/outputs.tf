@@ -34,6 +34,7 @@ output "eks_oidc_provider_arn" {
 }
 output "oidc_provider" {
   value = module.eks.oidc_provider
+  sensitive =  true
 }
 
 output "configure_kubectl" {
@@ -45,3 +46,4 @@ output "eks_cluster_status" {
   description = "Amazon EKS Cluster Status"
   value       = module.eks.cluster_status
 }
+
