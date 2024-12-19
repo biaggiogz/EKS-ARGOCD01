@@ -1,0 +1,47 @@
+kubecostToken: ${kubecostToken}
+
+global:
+  grafana:
+    enabled: false
+    proxy: false
+
+serviceAccount:
+  create: true
+  name: ${service-account}
+  annotations:
+    eks.amazonaws.com/role-arn: ${iam-role-arn}
+
+service:
+  type: LoadBalancer
+  port: 9090
+  targetPort: 9090
+  labels: {}
+  annotations: {}
+  sessionAffinity:
+    enabled: false # Makes sure that connections from a client are passed to the same Pod each time, when set to `true`. You should set it when you enabled authentication through OIDC or SAML integration.
+    timeoutSeconds: 10800
+
+kubecostProductConfigs:
+  projectID: ${projectID}
+  spotLabel: eks.amazonaws.com/capacityType
+  spotLabelValue: SPOT
+  athenaProjectID: ${athenaProjectID}
+  athenaBucketName: ${athenaBucketName}
+  athenaRegion: ${athenaRegion}
+  athenaDatabase: ${athenaDatabase}
+  athenaTable: ${athenaTable}
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: helm.team.dev/helm
+              operator: Exists
+persistentVolume:
+  size: 32Gi
+  enabled: false  # Note that setting this to false means configurations will be wiped out on pod restart.
+  # storageClass: "-" #
+  # existingClaim: kubecost-cost-analyzer # a claim in the same namespace as kubecost
+  labels: {}
+  annotations: {}

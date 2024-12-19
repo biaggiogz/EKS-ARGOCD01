@@ -1,0 +1,68 @@
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: general
+  annotations:
+    kubernetes.io/description: "General purpose NodePool for generic workloads"
+spec:
+  template:
+    metadata:
+      labels:
+        type: general
+        NodeGroupType: general
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["c", "m", "r"]
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values: ["2"]
+        - key: helm.team.dev/helm
+          operator: Exists
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: general
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 60s
+  limits:
+    cpu: 16
+    memory: 32Gi
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: general
+  annotations:
+    kubernetes.io/description: "General purpose EC2NodeClass for running Amazon Linux 2 nodes"
+spec:
+  amiSelectorTerms:
+    - alias: al2023@latest
+  role: "role-node-karpenter-eks-03"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "eks-03"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "eks-03"
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 20Gi
+        volumeType: gp3
+        iops: 10000
+        encrypted: true
+        deleteOnTermination: true
+        throughput: 125

@@ -18,3 +18,6 @@ output "vpc_cidr_block" {
   value = module.vpc.vpc_cidr_block
 }
 
+output "private_subnets_cidr_blocks" {
+  value = module.vpc.private_subnets_cidr_blocks
+}

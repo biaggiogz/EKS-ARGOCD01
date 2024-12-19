@@ -12,9 +12,7 @@ eks:
 	terraform apply -target="module.eks" -auto-approve
 	terraform output -raw configure_kubectl | bash
 
-destroy: delete-eks-cluster
-
-delete-eks-cluster:
+destroyeks:
 	terraform destroy -target="module.eks" -auto-approve
 
 help:

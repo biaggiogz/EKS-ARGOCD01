@@ -94,19 +94,16 @@ module "eks" {
         "karpenter.sh/discovery" = local.cluster_name
         "karpenter.sh/controller" = "true"
       }
-      taints = {
-        karpenter = {
-          key    = "karpenter.sh/controller"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }
-      }
     }
   }
 
   cluster_addons = {
     eks-pod-identity-agent ={
       most_recent = true
+    }
+
+    aws-ebs-csi-driver = {
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
     }
 
     coredns                = {

@@ -7,9 +7,8 @@ module "common_vars" {
 
 locals {
   num_of_subnets  = min(length(data.aws_availability_zones.available.names), 2)
-  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs             = slice(data.aws_availability_zones.available.names, 0, 2)
   cluster_name = module.common_vars.cluster_name
-  vpc_cidr = module.common_vars.vpc_cidr
   tags = {
     "enviroment" = module.common_vars.environment_name
   }
@@ -20,10 +19,14 @@ module "vpc" {
   version = "5.10.0"
 
   name = local.cluster_name
-  cidr = local.vpc_cidr
-  azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 3, k + length(local.azs))]
-  public_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 3, k)]
+  cidr = module.common_vars.vpc_cidr
+  azs  = local.azs
+
+  secondary_cidr_blocks = module.common_vars.secondary_cidr_blocks
+
+  private_subnets = concat(module.common_vars.private_subnets, module.common_vars.eks_data_plane_subnet_secondary_cidr)
+
+  public_subnets = module.common_vars.public_subnets
 
   enable_nat_gateway   = true
   create_igw           = true

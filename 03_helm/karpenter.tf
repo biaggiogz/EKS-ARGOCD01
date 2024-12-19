@@ -1,24 +1,4 @@
-data "aws_caller_identity" "current" {}
 
-module "common_vars" {
-  source = "../common-files"
-}
-module "eks_outputs" {
-  source = "../outputs_terraform_tfstate"
-}
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.ecr
-}
-locals {
-  cluster_endpoint = module.eks_outputs.cluster_endpoint
-  cluster_version = module.eks_outputs.cluster_version
-  eks_oidc_provider_arn = module.eks_outputs.eks_oidc_provider_arn
-  cluster_oidc_issuer_url = module.eks_outputs.cluster_oidc_issuer_url
-  cluster_name = module.common_vars.cluster_name
-  cluster_certificate_authority_data = module.eks_outputs.cluster_certificate_authority_data
-  region = "eu-north-1"
-  KARPENTER_VERSION="1.0.8"
-}
 resource "kubernetes_namespace" "karpenter" {
   metadata {
     name = "karpenter"
@@ -142,3 +122,37 @@ resource "null_resource" "pod_identity" {
 }
 
 */
+resource "null_resource" "delete_mapping_karpenter" {
+  triggers = {
+    always_run = var.ignore ? "false" : "true"
+  }
+
+  provisioner "local-exec" {
+    when    = create
+    command = <<EOT
+            if [ "${var.ignore}" = "false" ]; then
+              eksctl delete iamidentitymapping \
+                --cluster "${local.cluster_name}" \
+                --arn "${module.karpenter.node_iam_role_arn}";
+            else
+              echo "Ignore is set to true. Skipping execution.";
+            fi
+    EOT
+  }
+}
+
+module "prometheus" {
+  source = "./prometheus"
+  cluster_name = local.cluster_name
+  partition = data.aws_partition.current.partition
+  account_id = data.aws_caller_identity.current.account_id
+  cluster_oidc_issuer_url = local.cluster_oidc_issuer_url
+  password_grafana = var.password_grafana
+  vpc_id = module.outputs.vpc_id
+  cluster_endpoint = local.cluster_endpoint
+  cluster_version =local.cluster_version
+  eks_oidc_provider_arn = local.eks_oidc_provider_arn
+
+}
+
+
