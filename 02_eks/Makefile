@@ -1,14 +1,12 @@
 SHELL := /bin/bash
 
-deploy: init eks
 
-
-apply: eks
-
-init:
+deployeks:
 	terraform init
+	terraform apply -target="module.eks" -auto-approve
+	terraform output -raw configure_kubectl | bash
 
-eks:
+applyeks:
 	terraform apply -target="module.eks" -auto-approve
 	terraform output -raw configure_kubectl | bash
 

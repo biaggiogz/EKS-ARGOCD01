@@ -2,7 +2,7 @@
 module "ebs_csi_driver_irsa" {
   source                = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version               = "5.48.0"
-  role_name      = format("%s-%s-", local.cluster_name, "ebs-csi-driver")
+  role_name      = format("%s-%s-",module.common_vars.cluster_name, "ebs-csi-driver")
   attach_ebs_csi_policy = true
   oidc_providers = {
     main = {
@@ -13,7 +13,7 @@ module "ebs_csi_driver_irsa" {
   tags = local.tags
 }
 resource "aws_iam_role" "eks_admin" {
-  name = "${local.cluster_name}-eks-admin"
+  name = "${module.common_vars.cluster_name}-eks-admin"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -30,7 +30,7 @@ resource "aws_iam_role" "eks_admin" {
 }
 
 resource "aws_iam_role" "eks_nodes" {
-  name = "${local.cluster_name}-eks-nodes"
+  name = "${module.common_vars.cluster_name}-eks-nodes"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -71,5 +71,10 @@ resource "aws_iam_role_policy_attachment" "eks_loadbalancer_policy" {
 
 resource "aws_iam_role_policy_attachment" "eks_ec2_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+  role       = aws_iam_role.eks_nodes.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_ssm_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   role       = aws_iam_role.eks_nodes.name
 }

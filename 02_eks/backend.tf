@@ -30,6 +30,17 @@ terraform {
 
   }
 }
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+
+  config = {
+    bucket         = "tf-state-eks-03"
+    key            = "vpc/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+
+  }
+}
 
 provider "aws" {
   region = "eu-north-1"
