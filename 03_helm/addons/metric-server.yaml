@@ -1,0 +1,49 @@
+image:
+  repository: registry.k8s.io/metrics-server/metrics-server
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: metrics-server
+
+rbac:
+  create: true
+  pspEnabled: false
+
+apiService:
+  create: true
+
+podLabels:
+  k8s-app: metrics-server
+
+# HA enabled by enabling replicas to 2, updateStrategy and podDisruptionBudget to true
+replicas: 1
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+defaultArgs:
+  - --cert-dir=/tmp
+  - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+  - --kubelet-use-node-status-port
+  - --metric-resolution=15s
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: helm.team.dev/helm
+              operator: Exists

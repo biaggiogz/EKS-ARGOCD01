@@ -32,6 +32,18 @@ locals {
   }
 }
 
+
+
+module "karpenter" {
+  source = "./karpenter"
+  cluster_name = local.cluster_name
+  eks_oidc_provider_arn = local.eks_oidc_provider_arn
+  environment_name = module.common_vars.environment_name
+  cluster_endpoint = local.cluster_endpoint
+  ignore_delete_mapping_karpenter = var.ignore_delete_mapping_karpenter
+  cluster_certificate_authority_data = local.cluster_certificate_authority_data
+}
+
 module "prometheus" {
   source = "./prometheus"
   cluster_name = local.cluster_name
@@ -46,12 +58,11 @@ module "prometheus" {
 
 }
 
-module "karpenter" {
-  source = "./karpenter"
+module "addons" {
+  source = "./addons"
   cluster_name = local.cluster_name
+  cluster_endpoint = local.cluster_endpoint
+  cluster_version =local.cluster_version
   eks_oidc_provider_arn = local.eks_oidc_provider_arn
   environment_name = module.common_vars.environment_name
-  cluster_endpoint = local.cluster_endpoint
-  ignore_delete_mapping_karpenter = var.ignore_delete_mapping_karpenter
-  cluster_certificate_authority_data = local.cluster_certificate_authority_data
 }
