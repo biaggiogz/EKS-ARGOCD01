@@ -24,7 +24,11 @@ spec:
           values: ["spot"]
         - key: karpenter.k8s.aws/instance-category
           operator: In
-          values: ["c", "m", "r"]
+          values: ["t", "m", "r"]
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3","t3a"]
+          minValues: 2
         - key: karpenter.k8s.aws/instance-generation
           operator: Gt
           values: ["2"]
@@ -51,6 +55,8 @@ spec:
   amiSelectorTerms:
     - alias: al2023@latest
   role: "role-node-karpenter-eks-03"
+  kubelet:
+    podsPerCore: 40
   securityGroupSelectorTerms:
     - tags:
         karpenter.sh/discovery: "eks-03"
