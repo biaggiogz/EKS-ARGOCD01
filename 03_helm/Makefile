@@ -7,6 +7,10 @@ deploykarpenter:
 	sh /home/aniking/Documents/IdeaProjects/EKS-03/03_helm/patch_cdrs_karpenter.sh
 	kubectl apply -f /home/aniking/Documents/IdeaProjects/EKS-03/03_helm/karpenter/general.yaml
 
+applykarpenter:
+	terraform init
+	terraform apply -target="module.karpenter" -auto-approve
+
 destroykarpenter:
 	terraform destroy -target="module.karpenter" -auto-approve
 
@@ -19,5 +23,8 @@ destroyaddons:
 deployprometheus:
 	terraform init
 	terraform apply -target="module.prometheus" -auto-approve
+
+destroyprometheus:
+	terraform destroy -target="module.prometheus" -auto-approve
 
 .PHONY: *

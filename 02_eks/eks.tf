@@ -6,9 +6,11 @@ data "aws_iam_session_context" "current" {
 data "aws_eks_cluster_auth" "eks" {
   name = module.eks.cluster_name
 }
-
 module "common_vars" {
   source = "../common-files"
+}
+module "outputs" {
+  source = "../outputs_terraform_tfstate"
 }
 
 locals {
@@ -158,11 +160,7 @@ module "eks" {
   })
   tags = local.tags
   depends_on = [
-    aws_iam_role_policy_attachment.eks_node_policy,
-    aws_iam_role_policy_attachment.eks_cni_policy,
-    aws_iam_role_policy_attachment.eks_ecr_policy,
-    aws_iam_role_policy_attachment.eks_cluster_policy,
-    aws_iam_role_policy_attachment.eks_loadbalancer_policy
+      aws_iam_role.eks_nodes
   ]
 
 }

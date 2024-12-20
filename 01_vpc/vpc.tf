@@ -53,3 +53,65 @@ module "vpc" {
 
   tags = local.tags
 }
+
+/*
+module "vpc_endpoints_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  create = true
+
+  name        = "${local.cluster_name}-vpc-endpoints"
+  description = "Security group for VPC endpoint access"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress_with_cidr_blocks = [
+    {
+      rule        = "https-443-tcp"
+      description = "VPC CIDR HTTPS"
+      cidr_blocks = join(",", [module.vpc.vpc_cidr_block], module.vpc.vpc_secondary_cidr_blocks)
+    },
+  ]
+
+  egress_with_cidr_blocks = [
+    {
+      rule        = "https-443-tcp"
+      description = "All egress HTTPS"
+      cidr_blocks = "0.0.0.0/0"
+    },
+  ]
+
+  tags = local.tags
+}
+
+module "vpc_endpoints" {
+  source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
+  version = "5.14.0"
+
+  create = true
+
+  vpc_id             = module.vpc.vpc_id
+  security_group_ids = [module.vpc_endpoints_sg.security_group_id]
+
+  endpoints = merge({
+    s3 = {
+      service         = "s3"
+      service_type    = "Gateway"
+      route_table_ids = concat(module.vpc.public_route_table_ids, module.vpc.private_route_table_ids)
+      tags = {
+        Name = "${local.cluster_name}-s3"
+      }
+    }
+  },
+    { for service in toset(["autoscaling", "ecr.api", "ecr.dkr", "ec2", "ec2messages", "elasticloadbalancing", "sts", "kms", "logs", "ssm", "ssmmessages"]) :
+      replace(service, ".", "_") =>
+      {
+        service             = service
+        subnet_ids          = module.vpc.private_subnets
+        private_dns_enabled = true
+        tags                = { Name = "${local.cluster_name}-${service}" }
+      }
+    })
+
+  tags = local.tags
+}*/

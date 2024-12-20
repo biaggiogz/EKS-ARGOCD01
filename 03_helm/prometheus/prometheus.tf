@@ -1,6 +1,7 @@
+
 locals {
   amp_namespace= "kube-prometheus-stack"
-  amp_ingest_service_account= "prometheus-sa"
+  amp_ingest_service_account= "amp-iamproxy-ingest-service-account"
   region = "eu-north-1"
 
 }
@@ -104,32 +105,6 @@ data "aws_iam_policy_document" "grafana" {
 }
 
 
-
-resource "aws_iam_role" "amp_ingest_role" {
-  name = format("%s-%s", var.cluster_name, "amp-ingest")
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Effect = "Allow"
-        Principal = {
-          Federated = "arn:aws:iam::${var.account_id}:oidc-provider/${replace(var.cluster_oidc_issuer_url, "https://", "")}"
-        }
-        Condition = {
-          StringEquals = {
-            "${replace(var.cluster_oidc_issuer_url, "https://", "")}:sub": "system:serviceaccount:${local.amp_namespace}:${local.amp_ingest_service_account}"
-          }
-        }
-      }
-    ]
-  })
-
-
-}
-
-
 resource "kubernetes_namespace" "prometheus" {
   metadata {
     name = local.amp_namespace
@@ -139,19 +114,19 @@ resource "kubernetes_namespace" "prometheus" {
 
 
 resource "aws_secretsmanager_secret" "grafana" {
-  name                    = "${var.cluster_name}-grafana-dash"
+  name                    = "${var.cluster_name}-dash-grafana"
   recovery_window_in_days = 7
 }
 
 resource "aws_secretsmanager_secret_version" "grafana" {
   secret_id     = aws_secretsmanager_secret.grafana.id
   secret_string = var.password_grafana
-}
+}/*
 resource "aws_prometheus_workspace" "amp" {
 
   alias = format("%s-%s", "amp-ws", var.cluster_name)
 
-}
+}*/
 resource "kubernetes_storage_class" "ebs_csi_encrypted_gp3_storage_class" {
   metadata {
     name = "gp3"
@@ -208,37 +183,27 @@ module "amp_ingest_irsa" {
 
 
 }
-module "eks_blueprints_addons" {
 
-  source  = "aws-ia/eks-blueprints-addons/aws"
-  version = "1.19.0"
-  cluster_name      = var.cluster_name
-  cluster_endpoint  = var.cluster_endpoint
-  cluster_version   = var.cluster_version
-  oidc_provider_arn = var.eks_oidc_provider_arn
+resource "helm_release" "kube_prometheus_stack" {
 
+  name             = "kube-prometheus-stack"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = "kube-prometheus-stack"
+  create_namespace = false
 
-  enable_kube_prometheus_stack = true
-  kube_prometheus_stack = { ###REMEMBER UPDATE THIS CHART
-    values =  [templatefile("values/kube-prometheus.yaml", {
-      region              = local.region
-      amp_sa              = local.amp_ingest_service_account
-      amp_irsa            = module.amp_ingest_irsa.iam_role_arn
-      amp_remotewrite_url = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp.id}/api/v1/remote_write"
-      amp_url             = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp.id}"
-      storage_class_type  = kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class.id
-    })
-    ]
-    chart_version = "66.2.0"
-    set_sensitive = [
-      {
-        name  = "grafana.adminPassword"
-        value = aws_secretsmanager_secret_version.grafana.secret_string
-      }
-    ]
-  }
+  version          = "66.2.0"
 
+  values =  [templatefile("${path.module}/kube-prometheus.yaml", {
+    region              = local.region
+    amp_sa              = local.amp_ingest_service_account
+    amp_irsa            = module.amp_ingest_irsa.iam_role_arn
+    #amp_remotewrite_url = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp.id}/api/v1/remote_write"
+    #amp_url             = "https://aps-workspaces.${local.region}.amazonaws.com/workspaces/${aws_prometheus_workspace.amp.id}"
+    storage_class_name  = kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class.metadata[0].name
+    adminpassword = aws_secretsmanager_secret_version.grafana.secret_string
+  })
+  ]
 
-
-  depends_on = [ kubernetes_storage_class.ebs_csi_encrypted_gp3_storage_class]
+  depends_on = [kubernetes_namespace.prometheus,aws_secretsmanager_secret_version.grafana]
 }

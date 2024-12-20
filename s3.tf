@@ -61,6 +61,16 @@ resource "aws_s3_bucket_public_access_block" "pub_block_state" {
 
 output "key_kms_s3_id" {
   value = aws_kms_key.ekskey.key_id
+  sensitive = true
+}
+
+output "bucket_id" {
+  value = aws_s3_bucket.terraform_state.id
+  sensitive = true
+}
+output "bucket_arn" {
+  value = aws_s3_bucket.terraform_state.arn
+  sensitive = true
 }
 provider "aws" {
   region = "eu-north-1"

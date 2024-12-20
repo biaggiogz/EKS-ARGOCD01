@@ -43,6 +43,14 @@ module "karpenter" {
   ignore_delete_mapping_karpenter = var.ignore_delete_mapping_karpenter
   cluster_certificate_authority_data = local.cluster_certificate_authority_data
 }
+module "addons" {
+  source = "./addons"
+  cluster_name = local.cluster_name
+  cluster_endpoint = local.cluster_endpoint
+  cluster_version =local.cluster_version
+  eks_oidc_provider_arn = local.eks_oidc_provider_arn
+  environment_name = module.common_vars.environment_name
+}
 
 module "prometheus" {
   source = "./prometheus"
@@ -58,11 +66,3 @@ module "prometheus" {
 
 }
 
-module "addons" {
-  source = "./addons"
-  cluster_name = local.cluster_name
-  cluster_endpoint = local.cluster_endpoint
-  cluster_version =local.cluster_version
-  eks_oidc_provider_arn = local.eks_oidc_provider_arn
-  environment_name = module.common_vars.environment_name
-}

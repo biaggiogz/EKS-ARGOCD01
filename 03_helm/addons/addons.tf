@@ -73,6 +73,17 @@ module "eks_blueprints_kubernetes_addons" {
   aws_fsx_csi_driver = {
     namespace     = "kube-system"
 #    chart_version = "1.9.0"
+    values = [
+      <<-EOT
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: helm.team.dev/helm
+                      operator: Exists
+    EOT
+    ]
   }
 
 

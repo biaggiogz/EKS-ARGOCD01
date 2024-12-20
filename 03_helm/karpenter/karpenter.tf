@@ -28,6 +28,15 @@ module "karpenter" {
     "enviroment" = var.environment_name
   }
 }
+resource "aws_iam_role_policy_attachment" "karpenter_loadbalancer_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+  role       = "role-node-karpenter-${var.cluster_name}"
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_ec2_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+  role       = "role-node-karpenter-${var.cluster_name}"
+}
 
 resource "aws_eks_pod_identity_association" "karpenter" {
   cluster_name           = var.cluster_name

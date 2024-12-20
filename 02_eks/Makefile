@@ -3,11 +3,11 @@ SHELL := /bin/bash
 
 deployeks:
 	terraform init
-	terraform apply -target="module.eks" -auto-approve
+	terraform apply -auto-approve
 	terraform output -raw configure_kubectl | bash
 
 applyeks:
-	terraform apply -target="module.eks" -auto-approve
+	terraform apply -auto-approve
 	terraform output -raw configure_kubectl | bash
 
 destroyeks:

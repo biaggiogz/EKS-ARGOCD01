@@ -21,3 +21,4 @@ variable "ignore_delete_mapping_karpenter" {
 variable "cluster_certificate_authority_data" {
   type = string
 }
+

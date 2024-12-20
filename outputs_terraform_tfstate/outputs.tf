@@ -20,7 +20,23 @@ data "terraform_remote_state" "eks" {
 
   }
 }
+data "terraform_remote_state" "s3" {
+  backend = "s3"
 
+  config = {
+    bucket         = "tf-state-eks-03"
+    key            = "eks-03/terraform.tfstate"
+    region = "eu-north-1"
+    encrypt    = true
+
+  }
+}
+output "bucket_id" {
+  value = data.terraform_remote_state.s3.outputs.bucket_id
+}
+output "bucket_arn" {
+  value = data.terraform_remote_state.s3.outputs.bucket_arn
+}
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = data.terraform_remote_state.vpc.outputs.vpc_id
