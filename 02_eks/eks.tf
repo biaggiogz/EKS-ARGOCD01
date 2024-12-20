@@ -59,6 +59,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     initial = {
+
       name= "node-group"
       create_security_group = false
       create_launch_template = true
@@ -111,6 +112,9 @@ module "eks" {
           # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
           ENABLE_PREFIX_DELEGATION = "true"
           WARM_PREFIX_TARGET       = "1"
+          WARM_IP_TARGET           = "5"
+          MINIMUM_IP_TARGET        = "10"
+          ENABLE_POD_ENI           = "true"
           # ENI_CONFIG_LABEL_DEF               = "topology.kubernetes.io/zone"
           # AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = true
         }
