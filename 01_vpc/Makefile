@@ -7,4 +7,4 @@ deployvpc:
 destroyvpc:
 	terraform destroy -target="module.vpc" -auto-approve
 
-.PHONY: deployvpc destroyvpc
+.PHONY: *

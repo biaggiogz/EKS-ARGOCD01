@@ -1,3 +1,16 @@
+data "aws_ecrpublic_authorization_token" "token" {
+  provider = aws.ecr
+}
+
+provider "aws" {
+  region = "eu-north-1"
+
+}
+
+provider "aws" {
+  alias  = "ecr"
+  region = "us-east-1"
+}
 
 resource "kubernetes_namespace" "karpenter" {
   metadata {
@@ -123,6 +136,7 @@ resource "null_resource" "pod_identity" {
 }
 
 */
+/*
 resource "null_resource" "delete_mapping_karpenter" {
   triggers = {
     always_run = var.ignore_delete_mapping_karpenter ? "false" : "true"
@@ -141,3 +155,4 @@ resource "null_resource" "delete_mapping_karpenter" {
     EOT
   }
 }
+*/

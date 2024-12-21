@@ -13,10 +13,10 @@ module "outputs" {
 variable "password_grafana" {
   type = string
 }
-variable "ignore_delete_mapping_karpenter" {
-  type = bool
-}
 
+variable "deploy_number" {
+  type = number
+}
 locals {
   cluster_endpoint = module.outputs.cluster_endpoint
   cluster_version = module.outputs.cluster_version
@@ -40,7 +40,6 @@ module "karpenter" {
   eks_oidc_provider_arn = local.eks_oidc_provider_arn
   environment_name = module.common_vars.environment_name
   cluster_endpoint = local.cluster_endpoint
-  ignore_delete_mapping_karpenter = var.ignore_delete_mapping_karpenter
   cluster_certificate_authority_data = local.cluster_certificate_authority_data
 }
 module "addons" {
@@ -57,12 +56,19 @@ module "prometheus" {
   cluster_name = local.cluster_name
   partition = data.aws_partition.current.partition
   account_id = data.aws_caller_identity.current.account_id
-  cluster_oidc_issuer_url = local.cluster_oidc_issuer_url
   password_grafana = var.password_grafana
-  vpc_id = module.outputs.vpc_id
-  cluster_endpoint = local.cluster_endpoint
-  cluster_version =local.cluster_version
   eks_oidc_provider_arn = local.eks_oidc_provider_arn
+  deploy_number = var.deploy_number
 
 }
 
+
+module "kubecost" {
+  source = "./kubecost"
+
+  cluster_name = local.cluster_name
+  eks_oidc_provider_arn = local.eks_oidc_provider_arn
+  environment_name = module.common_vars.environment_name
+  region = local.region
+
+}

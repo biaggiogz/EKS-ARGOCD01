@@ -15,6 +15,7 @@ destroykarpenter:
 	terraform destroy -target="module.karpenter" -auto-approve
 
 deployaddons:
+	terraform init
 	terraform apply -target="module.addons" -auto-approve
 
 destroyaddons:
@@ -26,5 +27,12 @@ deployprometheus:
 
 destroyprometheus:
 	terraform destroy -target="module.prometheus" -auto-approve
+
+deploykubecost:
+	terraform init
+	terraform apply -target="module.kubecost" -auto-approve
+
+destroykubecost:
+	terraform destroy -target="module.kubecost" -auto-approve
 
 .PHONY: *

@@ -1,0 +1,89 @@
+global:
+  # pricingCsv:
+  #   enabled: false
+  #   location:
+  #     provider: "AWS"
+  #     region: "us-east-1"
+  #     URI: s3://kc-csv-test/pricing_schema.csv # a valid file URI
+  #     csvAccessCredentials: pricing-schema-access-secret
+
+  # This Prometheus setup is reusing the existing Prometheus deployment
+  # Check for more docs under https://guide.kubecost.com/hc/en-us/articles/4407595941015
+  prometheus:
+    fqdn: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc:9090
+    enabled: false
+  grafana:
+    enabled: false
+    proxy: false
+# If you have node-exporter and/or KSM running on your cluster, follow this step to disable the Kubecost included versions.
+prometheus:
+  global:
+    external_labels:
+      cluster_id: ${CLUSTER_NAME}
+  nodeExporter:
+    enabled: false
+  serviceAccounts:
+    nodeExporter:
+      create: false
+  kubeStateMetrics:
+    enabled: true
+  server:
+    image:
+      repository: public.ecr.aws/kubecost/prometheus
+  configmapReload:
+    prometheus:
+      image:
+        repository: public.ecr.aws/kubecost/prometheus-config-reloader
+
+kubecostFrontend:
+  image: public.ecr.aws/kubecost/frontend
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+
+kubecostMetrics:
+  emitPodAnnotations: true
+  emitNamespaceAnnotations: true
+
+kubecostModel:
+  image: public.ecr.aws/kubecost/cost-model
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+
+forecasting:
+  fullImageName: public.ecr.aws/kubecost/kubecost-modeling:v0.1.18
+
+networkCosts:
+  image:
+    repository: public.ecr.aws/kubecost/kubecost-network-costs
+    tag: v0.17.6
+
+clusterController:
+  image:
+    repository: public.ecr.aws/kubecost/cluster-controller
+
+kubecostProductConfigs:
+  clusterName: ${CLUSTER_NAME}
+# Set this to false if you're bringing your own service account.
+#serviceAccount:
+#  create: false
+#  name: kubecost-cost-analyzer
+#  annotations:
+#    eks.amazonaws.com/role-arn: <iam-role-arn>
+
+# Define persistence volume for cost-analyzer
+persistentVolume:
+  size: 32Gi
+  dbSize: 32.0Gi
+  enabled: true # Note that setting this to false means configurations will be wiped out on pod restart.
+  storageClass: gp3
+  # existingClaim: kubecost-cost-analyzer # a claim in the same namespace as kubecost
+
+reporting:
+  productAnalytics: false
+
+serviceAccount:
+  create: false

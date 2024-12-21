@@ -114,7 +114,7 @@ resource "kubernetes_namespace" "prometheus" {
 
 
 resource "aws_secretsmanager_secret" "grafana" {
-  name                    = "${var.cluster_name}-dash-grafana"
+  name                    = "${var.cluster_name}-dash-grafana-${var.deploy_number}"
   recovery_window_in_days = 7
 }
 
@@ -141,7 +141,7 @@ resource "kubernetes_storage_class" "ebs_csi_encrypted_gp3_storage_class" {
   volume_binding_mode    = "WaitForFirstConsumer"
   parameters = {
 
-    fsType    = "xfs"
+    #fsType    = "xfs"
     encrypted = true
     type      = "gp3"
   }

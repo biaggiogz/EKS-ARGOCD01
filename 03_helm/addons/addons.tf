@@ -11,7 +11,23 @@ locals {
   }
 
 }
+module "ebs_csi_driver_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.20"
 
+  role_name = "${local.region}-${var.cluster_name}-ebs-csi-driver" # Can only be 64 characters or less
+
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = var.eks_oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+
+  tags = local.tags
+}
 module "eks_blueprints_kubernetes_addons" {
   source  = "aws-ia/eks-blueprints-addons/aws"
   version = "1.18.0"
@@ -25,6 +41,11 @@ module "eks_blueprints_kubernetes_addons" {
   enable_cert_manager                 = true
   enable_aws_efs_csi_driver = true
   enable_aws_fsx_csi_driver = true
+  eks_addons = {
+    aws-ebs-csi-driver = {
+      service_account_role_arn = module.ebs_csi_driver_irsa.iam_role_arn
+    }
+  }
   metrics_server ={
     chart_version ="3.12.0"
     values = [ templatefile("${path.module}/metric-server.yaml",{} )

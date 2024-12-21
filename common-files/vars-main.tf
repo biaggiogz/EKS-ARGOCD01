@@ -67,3 +67,14 @@ variable "private_subnets" {
   default     = ["10.0.3.0/24", "10.0.4.0/24"]
   type        = list(string)
 }
+
+variable "secondary_cidr_blocks" {
+  description = "Secondary CIDR blocks to be attached to VPC"
+  default     = ["100.64.0.0/16"]
+  type        = list(string)
+}
+variable "eks_data_plane_subnet_secondary_cidr" {
+  description = "Secondary CIDR blocks. 32766 IPs per Subnet per Subnet/AZ for EKS Node and Pods"
+  default     = ["100.64.0.0/17", "100.64.128.0/17"]
+  type        = list(string)
+}
